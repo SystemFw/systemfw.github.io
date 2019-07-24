@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <!-- Microsoft Internet Explorer documentMode compatMode setting IE Modus -->
+    <script type="text/javascript">
+        var IE = null;
+        if (window.navigator.appName == "Microsoft Internet Explorer") {
+            if (document.documentMode) {
+
+                IE = document.documentMode;
+            } else {
+
+                IE = 5;
+                if (document.compatMode) {
+                    if (document.compatMode == "CSS1Compat")
+                        IE = 11;
+                }
+            }
+        }
+    </script>
+
+    <meta charset="utf-8">
+    <!-- X-UA -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <link rel="author" title="Fabio Labella" href="SystemFw" />
+
+
+
+    <meta name="google" content="notranslate" />
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- index ROBOTS follow -->
+    <meta name="robots" content="index, follow" />
+    <!-- Site Desciption -->
+    
+    <meta name="description" content="SystemFw FP blog">
+    
+
+    <meta name="keywords" content="Fabio Labella, SystemFw, Functional Programming, Haskell, Scala">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="../static/img/avatar.jpg" type="image/jpeg-icon" />
+
+    <!-- Blog Title -->
+    
+    <title>A case study of flatMap vs flatten</title>
+    
+
+    <!-- Property Metas -->
+    <meta property="og:image" content="static/img/ix.png" />
+    
+    <meta property="og:title" content="SystemFw FP blog" />
+    <meta property="og:site_name" content="SystemFw FP blog" />
+    
+
+    <!-- Canonical -->
+    <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">
+
+    <!-- StyleSheet -->
+    <link rel="stylesheet" href="../static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/spaceg.stylesheets.css">
+    <link rel="stylesheet" href="../static/css/syntax.css">
+
+    <!-- Syntax highlighting -->
+    
+    <link rel="stylesheet" href="../static/highlight/styles/zenburn.css">
+    <script src="../static/highlight/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic,900,900italic" rel="stylesheet" type="text/css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Playfair+Display:400,700,900,400italic,700italic,900italic" rel="stylesheet" type="text/css">
+    <!-- -->
+
+    <style>
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fff;
+            /* change if the mask should have another color then white */
+            z-index: 99;
+            /* makes sure it stays on top */
+        }
+
+        #status {
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            left: 50%;
+            /* centers the loading animation horizontally one the screen */
+            top: 50%;
+            /* centers the loading animation vertically one the screen */
+            background-image: url("/static/img/preloader.gif");
+            /* path to your loading animation */
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: -100px 0 0 -100px;
+            /* is width and height divided by two */
+        }
+
+        ul,
+        ol {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .navbar-inverse {
+            background-color: #FFF;
+            border-color: #FFFFFF;
+        }
+    </style>
+    <style>
+        header.intro-header {
+            background: #6f5499;
+            background: no-repeat center center;
+            background-attachment: scroll;
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            background-size: cover;
+            -o-background-size: cover;
+        }
+
+        /* Preloader */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fff;
+            /* change if the mask should have another color then white */
+            z-index: 99;
+            /* makes sure it stays on top */
+        }
+
+        #status {
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            left: 50%;
+            /* centers the loading animation horizontally one the screen */
+            top: 50%;
+            /* centers the loading animation vertically one the screen */
+            background-image: ;
+            /* path to your loading animation */
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: -100px 0 0 -100px;
+            /* is width and height divided by two */
+        }
+
+        li {
+            list-style: none;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+            padding-right: 0px;
+        }
+
+        article li {
+            list-style: inherit;
+        }
+
+        article .figure {
+            text-align: center
+        }
+    </style>
+    <!-- end Loading front stylesheet here -->
+</head>
+
+
+<body>
+    <div id="preloader">
+        <div id="status">
+
+        </div>
+
+    </div>
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="\" id="blog-title-left-top">SystemFw</a>
+        </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="../about.html" target="_blank">About</a></li>
+            <li><a href="../archive.html">Posts</a></li>
+            <li><a href="../writings.html">Writings</a></li>
+            <li><a href="../talks.html">Talks</a></li>
+            <li><a href="https://www.github.com/SystemFw" id="roundbutton" target="_blank"><i class="fa fa-github"></i>Projects</a></li>
+          </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+
+    <div id="content">
+        <header class="title-header" alt title>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>A case study of flatMap vs flatten</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Page Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <p>The correspondence between <code>flatMap</code> and <code>map + flatten</code> is well known, and in practical use <code>flatMap</code> is much more common, but what are some of the use cases for using <code>flatten</code> on its own?<br />
+We are going to look at two examples, using <strong>Typelevel</strong> libraries for our case study, and in the end we’ll hopefully discover something interesting about the nature of <code>flatMap</code>.</p>
+<p><strong>Note</strong>: this post is very much not a monad tutorial, you are expected to be already familiar with monads in practical use.</p>
+<h2 id="definitions-recap">Definitions recap</h2>
+<p>Let’s forget the existence of <code>Applicative</code> for this post, and look at these two definitions of <code>Monad</code>:</p>
+<pre class="scala"><code>trait Monad[F[_]] {
+  def pure[A](a: A): F[A]
+  def flatMap[A, B](fa: F[A])(f: A =&gt; F[B]): F[B]
+}</code></pre>
+<pre class="scala"><code>trait Functor[F[_]] {
+  def map[A, B](fa: F[A])(f: A =&gt; B): F[B]
+}
+trait Monad[F[_]] extends Functor[F] {
+  def pure[A](a: A): F[A]
+  def flatten[A](ffa: F[F[A]]): F[A]
+}</code></pre>
+<p>which are, of course, equivalent:</p>
+<pre class="scala"><code>// definition 2) in terms of 1)
+def map[A, B](fa: F[A])(f: A =&gt; B): F[B] =
+  flatMap(fa)(a =&gt; pure(f(a)))
+def flatten[A](ffa: F[F[A]]): F[A] =
+  flatMap(identity)
+
+// definition 1) in terms of 2)
+def flatMap[A, B](fa: F[A])(f: A =&gt; F[B]): F[B] =
+  flatten(map(fa)(f))</code></pre>
+<p>Now, definition 2) in terms of <code>map</code> and <code>flatten</code> (also called <code>join</code>) is closer to the Category Theory definition of Monad, and therefore often preferred for theoretical explanations, but the goal of this post is different: we are going to focus on a couple of <em>practical</em> use cases where it makes sense to use <code>flatten</code> on its own, instead of <code>flatMap.</code></p>
+<h2 id="example-1-ref.modify">Example 1: Ref.modify</h2>
+<p>For our first example, we are going to look at <code>cats.effect.Ref</code>, a purely functional, concurrent mutable reference which I’ve already described in a <a href="https://vimeo.com/294736344">couple</a> of <a href="https://www.youtube.com/watch?v=-dLp3u6y2DQ">talks</a>. You can check them out if you aren’t familiar with it, but for now we will have a look at this slightly simplified API:</p>
+<pre class="scala"><code>import cats.implicits._
+import cats.effect.IO
+
+trait Ref[A] {
+  def get: IO[A]
+  def set(a: A): IO[Unit]
+  def modify[B](f: A =&gt; (A, B)): IO[B]
+}</code></pre>
+<p><code>get</code> and <code>set</code> should be self explanatory, so let’s look at an example of <code>modify</code>: imagine we’re modeling a race, and each sprinter needs to update their arrival position and return it.</p>
+<pre class="scala"><code>def buggySprinter(finishLine: Ref[Int]): IO[Int] =
+  finishLine.get
+    .flatMap(pos =&gt; finishLine.set(pos + 1))
+    .flatMap(_ =&gt; finishLine.get)</code></pre>
+<p>This may seem correct at first glance, but note how the first <code>flatMap</code> is not safe in the presence of concurrency: a concurrent process could change the value of the <code>Ref</code> in between <code>get</code> and <code>set</code> (resulting in lost updates) , so we need an atomic <code>update(f: A =&gt; A): IO[Unit]</code>.</p>
+<p>This is not enough either though: a concurrent process could change the value after we update it but before we get it (resulting in an incorrect final result), so we also need the ability to return a value atomically, at which point we have rediscovered <code>modify</code>:</p>
+<pre class="scala"><code>def sprinter(finishLine: Ref[Int]): IO[Int] =
+  finishLine.modify { pos =&gt;
+    (pos + 1, pos + 1)
+  }</code></pre>
+<h3 id="modify-flatten-and-transactionality">Modify, flatten and transactionality</h3>
+<p>Depending on your concurrency background, you might be thinking of <code>modify</code> as involving locks, but the way things actually work is closer to transactions: the update is retried on concurrent conflicts until it succeeds, using something called a <strong>CAS loop</strong>. Under this perspective, we can see why the <code>flatMap</code> based examples were problematic: <code>flatMap</code> on <code>IO</code> has no concept of transactionality, which is given by the special <code>modify</code> method.</p>
+<p>To see where <code>flatten</code> comes into place, I’m going to very briefly introduce a powerful pattern involving <code>Ref</code>: concurrent state machines (again, watch <a href="https://www.youtube.com/watch?v=-dLp3u6y2DQ">this</a> if you want to know more).<br />
+In a concurrent state machine, there is a set of <em>states</em>, <em>transitions</em> between these states, and <em>actions</em> to be run upon each transition. Moreover, the transitions are triggered concurrently, meaning that the transition function needs to follow the transactional pattern outlined above: only when the concurrent transition is successfully registered the corresponding action needs to run.</p>
+<p>For example, let’s imagine a simple machine which will notify the user via an Http call when the lights are switched on or off.</p>
+<pre class="scala"><code>// this is the set of states
+// it's going to be held in a `Ref`
+sealed trait LightSwitch
+case object On extends LightSwitch
+case object Off extends LightSwitch
+
+// imagine something richer
+type HttpStatus = Int
+
+// these are our actions
+trait Notifications {
+  // e.g. via http call
+  def notify(msg: String): IO[HttpStatus]
+}
+
+// our finite state machine
+trait FSM {
+  def toggle: IO[HttpStatus]
+}</code></pre>
+<p>So, how do we implement <code>toggle</code>? Remember that <code>Ref.modify</code> allows us to atomically change the state and return a value, and <code>IO</code>s are values, which means we can return <em>the action itself</em>.</p>
+<pre class="scala"><code>modify(f: A =&gt; (A, B): IO[B]
+modify(f: DoorState =&gt; (DoorState, IO[HttpStatus])): IO[IO[HttpStatus]]</code></pre>
+<p>It’s important to understand the semantics of that <code>IO[IO[HttpStatus]]</code>: when the outer <code>IO</code> runs, it will try to change the current state of <code>FSM</code>, possibly retrying multiple times in case of conflict, but <em>without</em> running the inner <code>IO[HttpStatus]</code>, which is merely returned at the end.<br />
+Once the outer <code>IO</code> returns, it means that the state of <code>FSM</code> has been successfully changed, and it is now possible to run the action represented by the inner <code>IO[HttpStatus]</code>. In other words, we now need to go from <code>IO[IO[HttpStatus]]</code> to <code>IO[HttpStatus]</code>, which we can do with… <code>flatten</code>.<br />
+The full code looks like this:</p>
+<pre class="scala"><code>def fsm(states: Ref[LightSwitch], actions: Notifications): FSM = new FSM {
+  def toggle: IO[HttpStatus] = states.modify {
+    case Off =&gt; (On, actions.notify(&quot;The light has been turned on&quot;))
+    case On =&gt; (Off, actions.notify(&quot;The light has been turned off&quot;))
+  }.flatten 
+}</code></pre>
+<hr />
+<p>So we have our first case of standalone <code>flatten</code>, which happens when there is some notion of <em>transactionality</em> : you can think of <code>F[F[A]]</code> as <em>a program that returns another program</em>, where the first program is transactional and the second is not.</p>
+<p>We used <code>Ref.modify</code>, but this principle extends to other scenarios as well:</p>
+<ul>
+<li>The <a href="https://tpolecat.github.io/doobie/">Doobie</a> library exposes a <code>ConnectionIO[A]</code> type that represents a database transaction. So you would have a <code>ConnectionIO[IO[A]]</code>, <code>transact</code> to get to <code>IO[IO[A]]</code>, then <code>flatten</code>.</li>
+<li>Haskell’s <a href="https://haskell.fpcomplete.com/library/stm">Software Transactional Memory</a> is based on an <code>STM a</code> type that represents a transactional concurrent computation (similar to a multivariable <code>Ref</code>). So you would have an <code>STM (IO a)</code>, <code>atomically</code> to get to <code>IO (IO a)</code>, then <code>join</code> (Haskell’s version of <code>flatten</code>).</li>
+</ul>
+<h2 id="example-2-json-decoding">Example 2: JSON decoding</h2>
+<p>For our second example we are going to look at JSON decoding with <a href="https://circe.github.io/circe/">Circe</a>, focusing on a specific issue my team encountered recently. We have some simple JSON, representing our two different types of users:</p>
+<pre class="scala"><code>import io.circe._
+import io.circe.parser._
+import io.circe.generic.semiauto._
+
+def json(s: String): Json = parse(s).getOrElse(Json.Null)
+
+def named = json {
+ &quot;&quot;&quot;
+  {
+    &quot;named&quot; : {
+      &quot;name&quot;: &quot;Dotty&quot;,
+      &quot;surname&quot; : &quot;McDotFace&quot;
+   }
+  }
+ &quot;&quot;&quot;
+}
+
+def unnamed = json {
+ &quot;&quot;&quot;
+  {
+   &quot;unnamed&quot; : { 
+     &quot;id&quot; : 13355
+   }
+  }
+ &quot;&quot;&quot;
+}</code></pre>
+<p>which maps to the following ADT:</p>
+<pre class="scala"><code>sealed trait User
+case class Unnamed(id: Long) extends User
+case class Named(name: String, surname: String) extends User</code></pre>
+<p>So let’s go ahead and write a <code>Decoder</code> for it</p>
+<pre class="scala"><code>def unnamedDec: Decoder[User] = 
+  deriveDecoder[Unnamed]
+   .prepare(_.downField(&quot;unnamed&quot;))
+   .widen[User]  
+
+def namedDec: Decoder[User] = 
+  deriveDecoder[Named]
+   .prepare(_.downField(&quot;named&quot;))
+   .widen[User]
+
+def userDec = unnamedDec orElse namedDec
+
+userDec.decodeJson(named)
+// res2: Decoder.Result[User] = Right(Named(&quot;Dotty&quot;, &quot;McDotFace&quot;))
+userDec.decodeJson(unnamed)
+// res3: Decoder.Result[User] = Right(Unnamed(13355L))</code></pre>
+<p>A few points about the code above:</p>
+<ul>
+<li><code>deriveDecoder</code> automatically derives a decoder for the individual cases.</li>
+<li><code>prepare</code> modifies the input json before feeding it to the decoder. In our case we need to access the “unnamed” and “named” json objects before decoding the corresponding data.</li>
+<li><code>widen</code> changes a <code>Decoder[B]</code> into a <code>Decoder[A]</code> when <code>B &lt;: A</code>. It’s the explicit equivalent of covariance.</li>
+<li><code>decA orElse decB</code> will try <code>decA</code>, and fallback on <code>decB</code> if <code>decA</code> fails.</li>
+</ul>
+<p>So far this works great, but look at what happens when we send an incorrect unnamed user:</p>
+<pre class="scala"><code>def incorrectUnnamed: Json = json {
+    &quot;&quot;&quot;
+    {
+      &quot;unnamed&quot; : {
+        &quot;id&quot; : &quot;not a long&quot;
+      }
+    }
+    &quot;&quot;&quot;
+  }
+
+userDec.decodeJson(incorrectUnnamed)
+// res4: Decoder.Result[User] = Left(
+//   DecodingFailure(Attempt to decode value on failed cursor, List(DownField(named)))
+// )</code></pre>
+<p>As you can see, <code>Circe</code> does give back a nice error message, but unfortunately it’s coming from the wrong branch. We know that if the json contains <code>unnamed</code>, it’s an unnamed user, but circe does not: it sees a failure and falls back to the named user decoder with <code>orElse</code>, which obviously fails to decode as well, at which point you get the error from the last branch.<br />
+In general, this is ok, but in our specific use case it was a source of pain for the users of our API, so we wanted to report errors pertinent to the ADT case they were sending to us (assuming they got at least the “named/unnamed” tag right).</p>
+<h3 id="flatmap-and-orelse">flatMap and orElse</h3>
+<p>To see where the problem lies, it’s easy to think of the code above as being made of these four components (not 100% true in <code>Circe</code> terms, but the differences are irrelevant):</p>
+<ul>
+<li>an “unnamed” accessor <code>Decoder</code>, of type <code>unnamedField: Decoder[Json]</code></li>
+<li>a <code>Decoder</code> for unnamed users, of type <code>unnamedData: Json =&gt; Decoder[User]</code></li>
+<li>a “named” accessor <code>Decoder</code>, of type <code>namedField: Decoder[Json]</code></li>
+<li>a <code>Decoder</code> for named users, of type <code>namedData: Json =&gt; Decoder[User]</code></li>
+</ul>
+<p>where the whole decoder is</p>
+<pre class="scala"><code>unnamedField.flatMap(unnamedData) orElse namedField.flatMap(namedData)</code></pre>
+<p>if you look for example at <code>unnamedField.flatMap(unnamedData)</code>, you can see that there are two possible sources of error; one is in <code>unnamedField</code>, which means the tag is not “unnamed”, and one is in <code>unnamedData</code>, which means that the data format is wrong.<br />
+Crucially, we want <code>orElse</code> to only operate on the first source, so we have to separate them. One way to do that would be:</p>
+<pre class="scala"><code>unnamedField.orElse(namedField).flatMap { json =&gt;
+   unnamedData(json) orElse namedData(json)
+}</code></pre>
+<p>But that’s not ideal: first of all there is repetition of <code>orElse</code> (in our actual scenario there were many more cases), but also it’s actually weird to have to define <code>unnamedField</code> and <code>unnamedData</code> separately.<br />
+We somehow want to keep them together, but without triggering the second source of errors until <em>after</em> <code>orElse</code>, or in other words, we want to <em>return</em> the second <code>Decoder</code> <em>program</em> without <em>running it</em> (and therefore triggering its errors).<br />
+Again, this corresponds to <code>Decoder[Decoder[User]]</code>, which we can get by changing <code>flatMap</code> to <code>map</code>:</p>
+<pre class="scala"><code>unnamedField.map(unnamedData) orElse namedField.map(namedData)</code></pre>
+<p><code>orElse</code> will give us another <code>Decoder[Decoder[User]]</code>, and we can now run the inner decoder with… <code>flatten</code>.<br />
+And this is our second case of standalone <code>flatten</code>, which happens when we want <em>to interleave another operation</em> (in this case <code>orElse</code>) in between the <code>map</code> and <code>flatten</code> parts of <code>flatMap</code>.</p>
+<hr />
+<p>The full code contains some <code>Circe</code> details which aren’t super relevant conceptually, but I’m leaving it here for the interested readers. Note the correct, informative error trail at the end.</p>
+<pre class="scala"><code>implicit class Tagger[A](d: Decoder[A]) {
+  def tag(accessor: String): Decoder[Decoder[A]] = Decoder.instance { inputJson =&gt;
+    inputJson.downField(accessor) match {
+       case innerJson: HCursor =&gt; Right(innerJson)
+       case err: FailedCursor =&gt; Left(DecodingFailure(&quot;Failed cursor&quot;, err.history))
+     }
+   }.map(outJson =&gt; Decoder.instance(_ =&gt; d(outJson)))
+}
+
+def betterDec: Decoder[User] =
+  deriveDecoder[Unnamed]
+   .widen[User]
+   .tag(&quot;unnamed&quot;)
+   .orElse {
+      deriveDecoder[Named]
+       .widen[User]
+       .tag(&quot;named&quot;)
+   }.flatten
+
+betterDec.decodeJson(named)
+// res5: Decoder.Result[User] = Right(Named(&quot;Dotty&quot;, &quot;McDotFace&quot;))
+betterDec.decodeJson(unnamed)
+// res6: Decoder.Result[User] = Right(Unnamed(13355L))
+betterDec.decodeJson(incorrectUnnamed)
+// res7: Decoder.Result[User] = Left(
+//   DecodingFailure(Long, List(DownField(id), DownField(unnamed)))
+// )</code></pre>
+<h2 id="conclusion-the-nature-of-flatmap">Conclusion: the nature of <code>flatMap</code></h2>
+<p>Let’s look again at the signature of <code>flatMap</code>:</p>
+<pre class="scala"><code>def flatMap[A, B](fa: F[A])(f: A =&gt; F[B]): F[B]</code></pre>
+<p>you can look at <code>F[A]</code> as a program that returns <code>A</code>s, and at <code>flatMap</code> as a mode of composition that represents running two programs in sequence, using the result of the first to decide the shape of the second (<code>A =&gt; F[B]</code> means exactly “<code>F[B]</code> depends on <code>A</code>”).<br />
+But as we’ve seen, there are actually two components at play, <code>map</code> and <code>flatten</code>, so we can now refine our intuition: <code>map</code> represents running the first program and using its result to decide the shape of the second, and <code>flatten</code> then actually runs the second program.<br />
+Most of the time, these two things happen as a unit (hence why <code>flatMap</code> is more prominent), but not all the time, either because we want to take the decision about which program to run in a different way (in the case of <code>modify</code>, transactionally), or because we need to run other operations first (like <code>orElse</code>).<br />
+Slightly more formally, monads are about substitution (<code>map</code>) followed by renormalisation (<code>flatten</code>) and, as we’ve seen, sometimes you need to manipulate the non normalised form <code>F[F[A]]</code> on its own.</p>
+<p>Hope you enjoyed this post, and see you next time!</p>
+                <hr>
+            </div>
+        </div>
+    </div>
+</article>
+
+    </div>
+    <div id="footer">
+    </div>
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="feed.xml" data-datatype="json" data-type="GET" data-target="#frame" class="reload" id="clickme">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://github.com/SystemFw" target="_blank">
+                            <span class="fa-stack fa-lg">
+
+                                <i class="fa fa-arrow-circle-o-down"></i>
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a href="https://linkedin.com/in/fabiolabella" target="_blank">
+                            <span class="fa-stack fa-lg">
+
+                                <i class="fa fa-arrow-circle-o-down"></i>
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Fabio Labella 2019. <br><br>
+                </p>
+                <div class="col-md-12">
+                  <p class="copyright text-muted">
+                    Site generated by
+                    <a href="http://jaspervdj.be/hakyll" target="_blank">Hakyll</a>.
+                    Theme designed by
+                    <a href="https://github.com/katychuang" target="_blank">Katy Chuang</a>
+                    and can be found
+                    <a href="http://katychuang.com/hakyll-cssgarden/gallery/" target="_blank">here.</a>
+                  </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="../static/js/jquery.min.js"></script>
+<script src="../static/js/spaceg.stylesheets.min.js"></script>
+<script src="../static/js/bootstrap.min.js"></script>
+<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+<script src="../static/js/scripts.js"></script>
+
+</body>
+
+</html>
