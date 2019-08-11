@@ -307,7 +307,7 @@ trait FSM {
 }</code></pre>
 <p>So, how do we implement <code>toggle</code>? Remember that <code>Ref.modify</code> allows us to atomically change the state and return a value, and <code>IO</code>s are values, which means we can return <em>the action itself</em>.</p>
 <pre class="scala"><code>modify(f: A =&gt; (A, B): IO[B]
-modify(f: DoorState =&gt; (DoorState, IO[HttpStatus])): IO[IO[HttpStatus]]</code></pre>
+modify(f: LightSwitch =&gt; (LightSwitch, IO[HttpStatus])): IO[IO[HttpStatus]]</code></pre>
 <p>It’s important to understand the semantics of that <code>IO[IO[HttpStatus]]</code>: when the outer <code>IO</code> runs, it will try to change the current state of <code>FSM</code>, possibly retrying multiple times in case of conflict, but <em>without</em> running the inner <code>IO[HttpStatus]</code>, which is merely returned at the end.<br />
 Once the outer <code>IO</code> returns, it means that the state of <code>FSM</code> has been successfully changed, and it is now possible to run the action represented by the inner <code>IO[HttpStatus]</code>. In other words, we now need to go from <code>IO[IO[HttpStatus]]</code> to <code>IO[HttpStatus]</code>, which we can do with… <code>flatten</code>.<br />
 The full code looks like this:</p>
