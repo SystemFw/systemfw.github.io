@@ -1,0 +1,612 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <!-- Microsoft Internet Explorer documentMode compatMode setting IE Modus -->
+    <script type="text/javascript">
+        var IE = null;
+        if (window.navigator.appName == "Microsoft Internet Explorer") {
+            if (document.documentMode) {
+
+                IE = document.documentMode;
+            } else {
+
+                IE = 5;
+                if (document.compatMode) {
+                    if (document.compatMode == "CSS1Compat")
+                        IE = 11;
+                }
+            }
+        }
+    </script>
+
+    <meta charset="utf-8">
+    <!-- X-UA -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <link rel="author" title="Fabio Labella" href="SystemFw" />
+
+
+
+    <meta name="google" content="notranslate" />
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- index ROBOTS follow -->
+    <meta name="robots" content="index, follow" />
+    <!-- Site Desciption -->
+    
+    <meta name="description" content="SystemFw FP blog">
+    
+
+    <meta name="keywords" content="Fabio Labella, SystemFw, Functional Programming, Haskell, Scala">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="../static/img/avatar.jpg" type="image/jpeg-icon" />
+
+    <!-- Blog Title -->
+    
+    <title>Programs as Values, Part III: Explicit Control Flow</title>
+    
+
+    <!-- Property Metas -->
+    <meta property="og:image" content="static/img/ix.png" />
+    
+    <meta property="og:title" content="SystemFw FP blog" />
+    <meta property="og:site_name" content="SystemFw FP blog" />
+    
+
+    <!-- Canonical -->
+    <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">
+
+    <!-- StyleSheet -->
+    <link rel="stylesheet" href="../static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/spaceg.stylesheets.css">
+    <link rel="stylesheet" href="../static/css/syntax.css">
+
+    <!-- Syntax highlighting -->
+    
+    <link rel="stylesheet" href="../static/highlight/styles/zenburn.css">
+    <script src="../static/highlight/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic,900,900italic" rel="stylesheet" type="text/css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Playfair+Display:400,700,900,400italic,700italic,900italic" rel="stylesheet" type="text/css">
+    <!-- -->
+
+    <style>
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fff;
+            /* change if the mask should have another color then white */
+            z-index: 99;
+            /* makes sure it stays on top */
+        }
+
+        #status {
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            left: 50%;
+            /* centers the loading animation horizontally one the screen */
+            top: 50%;
+            /* centers the loading animation vertically one the screen */
+            background-image: url("/static/img/preloader.gif");
+            /* path to your loading animation */
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: -100px 0 0 -100px;
+            /* is width and height divided by two */
+        }
+
+        ul,
+        ol {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .navbar-inverse {
+            background-color: #FFF;
+            border-color: #FFFFFF;
+        }
+    </style>
+    <style>
+        header.intro-header {
+            background: #6f5499;
+            background: no-repeat center center;
+            background-attachment: scroll;
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            background-size: cover;
+            -o-background-size: cover;
+        }
+
+        /* Preloader */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fff;
+            /* change if the mask should have another color then white */
+            z-index: 99;
+            /* makes sure it stays on top */
+        }
+
+        #status {
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            left: 50%;
+            /* centers the loading animation horizontally one the screen */
+            top: 50%;
+            /* centers the loading animation vertically one the screen */
+            background-image: ;
+            /* path to your loading animation */
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: -100px 0 0 -100px;
+            /* is width and height divided by two */
+        }
+
+        li {
+            list-style: none;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+            padding-right: 0px;
+        }
+
+        article li {
+            list-style: inherit;
+        }
+
+        article .figure {
+            text-align: center
+        }
+    </style>
+    <!-- end Loading front stylesheet here -->
+</head>
+
+
+<body>
+    <div id="preloader">
+        <div id="status">
+
+        </div>
+
+    </div>
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="\" id="blog-title-left-top">SystemFw</a>
+        </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="../about.html" target="_blank">About</a></li>
+            <li><a href="../archive.html">Posts</a></li>
+            <li><a href="../writings.html">Writings</a></li>
+            <li><a href="../talks.html">Talks</a></li>
+            <li><a href="https://www.github.com/SystemFw" id="roundbutton" target="_blank"><i class="fa fa-github"></i>Projects</a></li>
+          </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+
+    <div id="content">
+        <header class="title-header" alt title>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Programs as Values, Part III: Explicit Control Flow</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Page Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <p>At the end of <a href="https://systemfw.org/posts/programs-as-values-II.html">Part II</a>, we arrived at a description of the programs as values paradigm: we represent effects as datatypes (i.e. programs as values), and we use functions to assemble big programs out of smaller ones, until the last instruction in <code>main</code> translates them to actual side effects.</p>
+<p>Before diving more deeply in the structure of these datatypes, I’d like to expand on the two fundamental ideas:</p>
+<ul>
+<li>We can represent execution through explicit combinators. We will see how this is possible even in the execution as evaluation paradigm.</li>
+<li>Programs as values datatypes really do behave as values. We will show this with very simple examples based on <code>cats.effect.IO</code>.</li>
+</ul>
+<h2 id="making-execution-explicit">Making execution explicit</h2>
+<p>In this section we will look at how to express execution via explicit combinators. We don’t yet know how to do it in programs as values, so we are going to do it in execution as evaluation. In particular we are looking to express the following program:</p>
+<pre class="scala"><code>def p = {
+  println(&quot;What's your name?&quot;)
+  Thread.sleep(1000)
+  val yourName = scala.io.StdIn.readLine()
+  println(s&quot;Hello, $yourName!&quot;)
+  yourName.length
+}</code></pre>
+<p>This type of sequential control flow is very natural in execution as evaluation, but on deeper thought it relies on two “magical” features: one is that a newline/semicolon between two instructions <code>A</code> and <code>B</code> means “execute <code>A</code> before <code>B</code>”, and the other is that we can refer to the result of an instruction in subsequent instructions by binding it to a <code>val</code>.</p>
+<p>So here’s a challenge: in a strict language, is it possible to express <code>p</code> without relying on the two magical features I just described? Remember that by <em>strict</em> language we mean a language where the evaluation semantics are <code>call-by-value</code>, which means (informally) that the arguments of a function are evaluated left to right before the body of that function.</p>
+<p>Actually step away from the page and spend a few minutes thinking how we could do this.</p>
+<p>Did you manage? Nice!, but don’t worry if you didn’t: it’s counterintuitive at first, but we can get there by looking at <code>call-by-value</code> in more detail.</p>
+<p>Let’s take this example:</p>
+<pre class="scala"><code>def two = 2
+def three = 3
+def add(a: Int, b: Int): Int = a + b
+
+add(two, three)</code></pre>
+<p>and add <code>println</code>s to trace evaluation:</p>
+<pre class="scala"><code>def two = {
+ println(&quot;Evaluating 2&quot;)
+ 2
+}
+
+def three = {
+ println(&quot;Evaluating 3&quot;)
+ 3
+}
+
+def add(a: Int, b: Int): Int = {
+  println(&quot;Evaluating addition&quot;)
+  a + b
+}
+
+add(two, three)
+// Evaluating 2
+// Evaluating 3
+// Evaluating addition
+// res1: Int = 5</code></pre>
+<p>The execution trace closely resembles sequential control flow, which gives us an idea on how we can sequence two instructions by exploiting the evaluation order of the arguments of a function:</p>
+<pre class="scala"><code>def seq1[A, B](fst: A, snd: B): Unit = ()
+
+seq1(
+  println(&quot;first&quot;),
+  seq1(
+    println(&quot;second&quot;),
+    println(&quot;third&quot;)
+  )
+)
+// first
+// second
+// third</code></pre>
+<p>But that’s not general enough: when using the normal newline/semicolon, the last expression becomes the overall result. So we can slightly modify our <code>seq1</code> to return the second argument instead:</p>
+<pre class="scala"><code>def seq2[A, B](a: A, b: B): B = b
+
+seq2(
+  println(&quot;one&quot;),
+  42
+)
+// one
+// res3: Int = 42</code></pre>
+<p>We are getting there, but we still cannot express the second “magical” feature, the ability to refer to the result of an instruction in subsequent instructions. This program:</p>
+<pre class="scala"><code>val s = scala.io.StdIn.readLine()
+s.length + 1</code></pre>
+<p>would translate to:</p>
+<pre class="scala"><code>seq2(
+  scala.io.StdIn.readLine(),
+  s.length + 1
+)
+// error: not found: value s
+//   s.length + 1
+//   ^</code></pre>
+<p>To get to the final solution, we need to focus on the role of <code>val yourName</code> in this snippet:</p>
+<pre class="scala"><code> val yourName = scala.io.StdIn.readLine()
+ println(s&quot;Hello, $yourName!&quot;)
+ yourName.length</code></pre>
+<p><code>val yourName</code> conceptually divides the program in two halves: the first half computes <code>yourName</code>, and the second half <em>depends</em> on it.</p>
+<p><code>seq2</code> cannot represent this idea because the two halves of the program are represented as <code>A</code> and <code>B</code>, and there is no relationship between them:</p>
+<pre class="scala"><code>def seq2[A, B](a: A, b: B): B = b</code></pre>
+<p>but that shows us the path to a solution, we need to express the idea that <code>B</code> <em>depends on</em> <code>A</code>, i.e. that <code>B</code> is a function of <code>A</code>:</p>
+<pre class="scala"><code>def seq3[A, B](a: A)(f: A =&gt; B): B = f(a)</code></pre>
+<p>and we can now write:</p>
+<pre class="scala"><code>seq3(scala.io.StdIn.readLine())(s =&gt; s.length + 1)</code></pre>
+<p><code>seq3</code> also works for the simple sequencing case, by ignoring its argument:</p>
+<pre class="scala"><code>seq3(println(&quot;hello&quot;))(_ =&gt; println(&quot;world&quot;))</code></pre>
+<p>which makes sense, normal semicolons can also be seen as a special case of named results, i.e.</p>
+<pre class="scala"><code>println(&quot;hello&quot;)
+println(&quot;world&quot;)</code></pre>
+<p>can be seen as:</p>
+<pre class="scala"><code>val _ = println(&quot;hello&quot;)
+val _ = println(&quot;world&quot;)</code></pre>
+<p><strong>We’ve solved our problem</strong>, and can now express the original program:</p>
+<pre class="scala"><code>def seq[A, B](a: A)(f: A =&gt; B): B = f(a)
+
+def original = {
+  println(&quot;What's your name?&quot;)
+  Thread.sleep(1000)
+  val yourName = scala.io.StdIn.readLine()
+  println(s&quot;Hello, $yourName!&quot;)
+  yourName.length
+}
+
+def explicit =
+  seq(println(&quot;What's your name?&quot;)) { _ =&gt;
+    seq(Thread.sleep(1000)) { _ =&gt;
+      seq(scala.io.StdIn.readLine()) { yourName =&gt;
+        seq(println(s&quot;Hello, $yourName!&quot;)) { _ =&gt;
+          yourName.length
+        }
+      }
+    }
+  }</code></pre>
+<p>So, why did we do this? The implementation of <code>seq</code> still relies on evaluation, and the effectful building blocks like <code>println</code> aren’t represented as datatypes/values, but <code>explicit</code> shows that we can describe execution through combinators, and that <em>structure</em> can be applied to things which <em>are</em> values, like <code>cats.effect.IO</code>:</p>
+<pre class="scala"><code>import cats.effect.IO
+import scala.concurrent.duration._
+
+ // works entirely differently from `seq`,
+ // but expresses the same idea
+def seqIO[A, B](a: IO[A])(f: A =&gt; IO[B]): IO[B] =
+  a.flatMap(f)
+
+def p2 =
+  seqIO(IO.println(&quot;What's your name&quot;)) { _ =&gt;
+    seqIO(IO.sleep(1.second)) { _ =&gt;
+      seqIO(IO.readLine) { yourName =&gt;
+        seqIO(IO.println(s&quot;Hello, $yourName!&quot;)) { _ =&gt;
+          IO.pure(yourName.length)
+        }
+      }
+    }
+  }
+
+// or, idiomatically:
+
+IO.println(&quot;What's your name&quot;) &gt;&gt;
+IO.sleep(1.second) &gt;&gt;
+IO.readLine.flatMap { yourName =&gt;
+  IO.println(s&quot;Hello, $yourName!&quot;).as(yourName.length)
+}</code></pre>
+<h2 id="io-is-a-value">IO is a value</h2>
+<p>In programs as values effects are represented as datatypes, and <code>IO</code> is the most fundamental datatype in the paradigm: an <code>IO[A]</code> represents a program that can perform arbitrary effects, and produce a result of type <code>A</code>.</p>
+<p>In the previous section I said that <code>cats.effect.IO</code> is a value, so what does this mean?</p>
+<p>Let’s take a look at this program:</p>
+<pre class="scala"><code>import cats.effect.IO
+
+val a: IO[Unit] = IO.println(&quot;hello&quot;)
+// a: IO[Unit] = IO(...)</code></pre>
+<p>As you can see, evaluating <code>a</code> doesn’t print anything, it literally just returns an instance of the <code>IO</code> datatype. In fact, it isn’t any different from:</p>
+<pre class="scala"><code>val b: Int = 42
+// b: Int = 42</code></pre>
+<p><code>IO</code> gets translated into actual side-effects only in <code>main</code>, and cats-effect defines an <code>IOApp</code> trait as the entry point of your application:</p>
+<pre class="scala"><code>import cats.effect.IOApp
+
+object MyApp extends IOApp.Simple {
+  def run: IO[Unit] = a
+}</code></pre>
+<p>The translation happens when the JVM calls <code>main</code>:</p>
+<pre class="scala"><code>MyApp.main(Array())
+
+// hello</code></pre>
+<p>Because <code>IO</code>s are values, relying on evaluation to sequence two <code>IO</code>s has no effect:</p>
+<pre class="scala"><code>val a: IO[Unit] = {
+  IO.println(&quot;hey&quot;)
+  IO.println(&quot;hello&quot;)
+}</code></pre>
+<pre class="scala"><code>MyApp.main(Array())
+
+// hello</code></pre>
+<p>Which is very surprising at first, but it’s equivalent to saying that the number <code>34</code> is discarded in:</p>
+<pre class="scala"><code>val c = {
+  34
+  &quot;something&quot;
+}
+// c: String = &quot;something&quot;</code></pre>
+<p>Both <code>IO.println(&quot;hey&quot;)</code> and <code>34</code> are just values, and have no effect if you do nothing with them.</p>
+<p>Sequencing has to be explicit through combinators, just like we saw in the previous section:</p>
+<pre class="scala"><code>val a: IO[Unit] =
+  IO.println(&quot;hey&quot;).flatMap { _ =&gt;
+    IO.println(&quot;hello&quot;)
+  }
+
+// can be shortened to
+ IO.println(&quot;hey&quot;) &gt;&gt; IO.println(&quot;hello&quot;)</code></pre>
+<pre class="scala"><code>MyApp.main(Array())
+
+// hey
+// hello</code></pre>
+<p>And above all, remember that values are <em>referentially transparent</em>, so the two programs below describe the same behaviour, which is to print twice:</p>
+<pre class="scala"><code>IO.println(&quot;hello&quot;) &gt;&gt; IO.println(&quot;hello&quot;)</code></pre>
+<pre class="scala"><code>val p = IO.println(&quot;hello&quot;)
+p &gt;&gt; p</code></pre>
+<p>just like the two expressions below describe the same result:</p>
+<pre><code>2 + 2</code></pre>
+<pre><code>val x = 2
+x + x</code></pre>
+<p><em>You can always give a name to a value, and you can always replace a name with its value</em>.</p>
+<h2 id="explicit-control-flow-with-values">Explicit control flow with values</h2>
+<p>In this post we saw that using datatypes to describe effects requires modelling execution with explicit combinators, and that we can readily emulate sequential flow with this approach.</p>
+<p>In most execution as evaluation languages, enriching control flow beyond that requires additional features, such as <code>try/catch</code>, <code>for</code> loops, or <code>async</code> functions, but those concepts can all be represented as combinators over values:</p>
+<pre class="scala"><code>ioA.handleErrorWith(ioB)
+listA.traverse(i =&gt; myIO(i))
+(ioA, ioB).parMapN(f)</code></pre>
+<p>and the same approach scales all the way to very rich, compositional apis:</p>
+<pre class="scala"><code>def randomWait =
+  Stream
+    .random[IO]
+    .evalMap(n =&gt; IO.sleep(n.nanos))
+
+def hello = IO.println(&quot;hello&quot;)
+
+Stream
+  .repeatEval(hello)
+  .zipLeft(randomWait)
+  .take(10)
+  .interruptAfter(10.seconds)</code></pre>
+<p>as well as to other kinds of effectful programs, such as parsers:</p>
+<pre class="scala"><code>val listSep: Parser[Unit] =
+  Parser.char(',').surroundedBy(whitespace.rep.void).void</code></pre>
+<p>Next time, we are going to start looking in detail at the structure of programs as values datatypes, by talking about <em>algebras</em>. See you then!</p>
+<!-- algebraic structure: intro form, combinators, elimination forms -->
+<!-- Algebras comes from universal algebra -->
+<!-- An algebra is a set (called the carrier) with a finite set of total functions that have the carrier set as their common codomain. -->
+<!-- A Sigma algebra (signature algebra) defines the set of typed operator symbols without specifyingfunctions that would be the actual operators. Thus a signature defines a class of algebras, those whose operators conform to the typing contraints (used for typeclasses, ML modules, abstract data type etc) -->
+<!-- progression: monoid, why F[A], functor, (split here?) monad, -->
+<!-- monaderror -->
+<!-- --- -->
+<!-- programs as values notes -->
+<!--   algebra -->
+<!--   type A -- carrier -->
+<!--   intro: SomeOtherThanAType => A, primitives: A (intro form of shape () => A) -->
+<!--   combinators: (something) -> A -> A -->
+<!--   elimination forms: A => (something else) => SomeOtherThanAType -->
+<!--   -- write strings to "stdout" -->
+<!--   type Put -->
+<!--   def string(s: String): Put // String => Put, intro -->
+<!--   def plus(a: Put, b: Put): Put // combinator -->
+<!--   ----- -->
+<!--   def run: Put => List[String] // elimination form -->
+<!--   val a: Put = string("hello") -->
+<!--   val helloWorld: Put = a.plus(string("world")) -->
+<!--   def writeN(in: Put, n: Int): Put = -->
+<!--     n match { -->
+<!--       0 => string("") -->
+<!--       n => in.plus(writeN(in))plus(writeN(in, n - 1), in) -->
+<!--     } -->
+<!--   ----------- -->
+<!--   List[Put] -->
+<!--   ----------- -->
+<!--   type Console[A] <--  output  /// (Put + Read) -->
+<!--         ^^ language -->
+<!--   ----- intro -->
+<!--   def read: Console[String] -->
+<!--   def put(s: String): Console[Unit] -->
+<!--   def pure[A](s: A): Console[A] // lift, with no effect -->
+<!--   ----- combinators -->
+<!--   Console[A] => (A => B) => Console[B] -->
+<!--   (A => B) => (Console[A] => Console[B]), lifting A => B into the Console language -->
+<!--   def transformOutput[A, B](p: Console[A],trasformation: A => B): Console[B] = ??? -->
+<!--       map -->
+<!--   def andThen(p: Console[A], transformation: A => Console[B]): Console[B] = -->
+<!--       flatMap/chaining -->
+<!--   def flatten: Console[Console[A]] => Console[A] -->
+<!--   ----- elim <-- forget -->
+<!--   ++,empty Monoid -->
+<!--   map Functor -->
+<!--    (A => B) => F[A] => F[B] -->
+<!--     (A => B => ... => N) => F[A] => F[B] => ... => F[N] -->
+<!--     flatMap -->
+<!--   andThen, pure Monad -->
+<!--   andThen -\-> sequential, arbitrary control flow -->
+<!--   read a String, count the length, print that -->
+<!--   read, put, tOut -->
+<!--   val p: Console[Unit] = read // Console[String] -->
+<!--     .transformOutput(_.length) // Console[Int] -->
+<!--     .transformOutput(_.toString) // Console[String] -->
+<!--     .andThen(put) -->
+<!--   def repeatN(p: Console[A], n: Int): Console[A] = -->
+<!--     n match { -->
+<!--     } -->
+<!--   Stream[F[_], A] <-- type, Stream[IO, A] -->
+<!--   ----- intro -->
+<!--   empty: () => Stream[IO, A] -->
+<!--   fromList: List[A] => Stream[IO, A] -->
+<!--   eval(action: IO[A]): Stream[IO, A] -->
+<!--   ---- tons -->
+<!--   flatMap: Stream[F, A] => (A => Stream[F, B]) => Stream[F, B] -->
+<!--   ++: Stream[F, A] => STream[F, A] => Stream[F, A] -->
+<!--   take: Int => Stream[F, A] => Stream[F, A] -->
+<!--   concurrently: Stream[F, A] => Stream[F, Unit] => Stream[F, A] -->
+<!--    .... -->
+<!--    ---- -->
+<!--   compile.drain: Stream[F, A] => IO[Unit] -->
+<!--   compile.list: Stream[F, A] => IO[List[A]] -->
+<!--   compile.fold -->
+<!-- } -->
+                <hr>
+            </div>
+        </div>
+    </div>
+</article>
+
+    </div>
+    <div id="footer">
+    </div>
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="feed.xml" data-datatype="json" data-type="GET" data-target="#frame" class="reload" id="clickme">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://github.com/SystemFw" target="_blank">
+                            <span class="fa-stack fa-lg">
+
+                                <i class="fa fa-arrow-circle-o-down"></i>
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a href="https://linkedin.com/in/fabiolabella" target="_blank">
+                            <span class="fa-stack fa-lg">
+
+                                <i class="fa fa-arrow-circle-o-down"></i>
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Fabio Labella 2019. <br><br>
+                </p>
+                <div class="col-md-12">
+                  <p class="copyright text-muted">
+                    Site generated by
+                    <a href="http://jaspervdj.be/hakyll" target="_blank">Hakyll</a>.
+                    Theme designed by
+                    <a href="https://github.com/katychuang" target="_blank">Katy Chuang</a>
+                    and can be found
+                    <a href="http://katychuang.com/hakyll-cssgarden/gallery/" target="_blank">here.</a>
+                  </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="../static/js/jquery.min.js"></script>
+<script src="../static/js/spaceg.stylesheets.min.js"></script>
+<script src="../static/js/bootstrap.min.js"></script>
+<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+<script src="../static/js/scripts.js"></script>
+
+</body>
+
+</html>

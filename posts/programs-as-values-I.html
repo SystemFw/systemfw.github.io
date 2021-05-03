@@ -269,14 +269,14 @@ def p3 = ??? //combine p1 and p2?</code></pre>
 <p>And second, not all the constituent parts make sense on their own, for example <code>i = i + 1</code> only makes sense when considered together with <code>var i = 0</code> and <code>while(i &lt; 10)</code>.</p>
 <p>Low compositionality is fine in small doses, but it scales poorly with complexity: even a slightly more complex version of the program (e.g stop after 10 seconds or 10 iterations, waiting a random interval between iterations) leads to more entangled code. In the extreme, it will result in spaghetti code, code which has such a low level of compositionality that it can’t be separated into its constituent parts at all.</p>
 <p>Compare instead with this alternative solution, which uses <code>fs2.Stream</code>:</p>
-<pre class="scala"><code>val p = IO(println(&quot;hello&quot;))
+<pre class="scala"><code>val p = IO.println(&quot;hello&quot;)
 
 Stream.repeatEval(p)
       .take(10)
       .metered(1.second)</code></pre>
 <p>This code is highly compositional, it is made of smaller parts, which all make sense as individual programs:</p>
 <ul>
-<li><code>IO(println(&quot;hello&quot;))</code> is the program that prints “hello”.</li>
+<li><code>IO.println(&quot;hello&quot;)</code> is the program that prints “hello”.</li>
 <li><code>repeatEval</code> is the program that executes another program indefinitely.</li>
 <li><code>take(n)</code> is the program that evaluates the first <code>n</code> iterations of another program.</li>
 <li><code>metered</code> is the program that executes another program at the given rate.</li>
@@ -287,7 +287,7 @@ Stream.repeatEval(p)
     .random[IO]
     .evalMap(n =&gt; IO.sleep(n.nanos))
 
-def hello = IO(println(&quot;hello&quot;))
+def hello = IO.println(&quot;hello&quot;)
 
 Stream
   .repeatEval(hello)
