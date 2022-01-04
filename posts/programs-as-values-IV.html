@@ -1,0 +1,467 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <!-- Microsoft Internet Explorer documentMode compatMode setting IE Modus -->
+    <script type="text/javascript">
+        var IE = null;
+        if (window.navigator.appName == "Microsoft Internet Explorer") {
+            if (document.documentMode) {
+
+                IE = document.documentMode;
+            } else {
+
+                IE = 5;
+                if (document.compatMode) {
+                    if (document.compatMode == "CSS1Compat")
+                        IE = 11;
+                }
+            }
+        }
+    </script>
+
+    <meta charset="utf-8">
+    <!-- X-UA -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <link rel="author" title="Fabio Labella" href="SystemFw" />
+
+
+
+    <meta name="google" content="notranslate" />
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- index ROBOTS follow -->
+    <meta name="robots" content="index, follow" />
+    <!-- Site Desciption -->
+    
+    <meta name="description" content="SystemFw FP blog">
+    
+
+    <meta name="keywords" content="Fabio Labella, SystemFw, Functional Programming, Haskell, Scala">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="../static/img/avatar.jpg" type="image/jpeg-icon" />
+
+    <!-- Blog Title -->
+    
+    <title>Programs as Values, Part IV: Algebras</title>
+    
+
+    <!-- Property Metas -->
+    <meta property="og:image" content="static/img/ix.png" />
+    
+    <meta property="og:title" content="SystemFw FP blog" />
+    <meta property="og:site_name" content="SystemFw FP blog" />
+    
+
+    <!-- Canonical -->
+    <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">
+
+    <!-- StyleSheet -->
+    <link rel="stylesheet" href="../static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/spaceg.stylesheets.css">
+    <link rel="stylesheet" href="../static/css/syntax.css">
+
+    <!-- Syntax highlighting -->
+    
+    <link rel="stylesheet" href="../static/highlight/styles/zenburn.css">
+    <script src="../static/highlight/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic,900,900italic" rel="stylesheet" type="text/css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Playfair+Display:400,700,900,400italic,700italic,900italic" rel="stylesheet" type="text/css">
+    <!-- -->
+
+    <style>
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fff;
+            /* change if the mask should have another color then white */
+            z-index: 99;
+            /* makes sure it stays on top */
+        }
+
+        #status {
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            left: 50%;
+            /* centers the loading animation horizontally one the screen */
+            top: 50%;
+            /* centers the loading animation vertically one the screen */
+            background-image: url("/static/img/preloader.gif");
+            /* path to your loading animation */
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: -100px 0 0 -100px;
+            /* is width and height divided by two */
+        }
+
+        ul,
+        ol {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .navbar-inverse {
+            background-color: #FFF;
+            border-color: #FFFFFF;
+        }
+    </style>
+    <style>
+        header.intro-header {
+            background: #6f5499;
+            background: no-repeat center center;
+            background-attachment: scroll;
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            background-size: cover;
+            -o-background-size: cover;
+        }
+
+        /* Preloader */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fff;
+            /* change if the mask should have another color then white */
+            z-index: 99;
+            /* makes sure it stays on top */
+        }
+
+        #status {
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            left: 50%;
+            /* centers the loading animation horizontally one the screen */
+            top: 50%;
+            /* centers the loading animation vertically one the screen */
+            background-image: ;
+            /* path to your loading animation */
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: -100px 0 0 -100px;
+            /* is width and height divided by two */
+        }
+
+        li {
+            list-style: none;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+            padding-right: 0px;
+        }
+
+        article li {
+            list-style: inherit;
+        }
+
+        article .figure {
+            text-align: center
+        }
+    </style>
+    <!-- end Loading front stylesheet here -->
+</head>
+
+
+<body>
+    <div id="preloader">
+        <div id="status">
+
+        </div>
+
+    </div>
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="\" id="blog-title-left-top">SystemFw</a>
+        </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="../about.html" target="_blank">About</a></li>
+            <li><a href="../archive.html">Posts</a></li>
+            <li><a href="../writings.html">Writings</a></li>
+            <li><a href="../talks.html">Talks</a></li>
+            <li><a href="https://www.github.com/SystemFw" id="roundbutton" target="_blank"><i class="fa fa-github"></i>Projects</a></li>
+          </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+
+    <div id="content">
+        <header class="title-header" alt title>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Programs as Values, Part IV: Algebras</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Page Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <p>In the previous instalments of this series, we’ve introduced two core components of the programs as values paradigm: <em>datatypes</em> that represent effects, and <em>functions</em> that combine instances of those datatypes in order to construct programs by describing control flow explicitly.</p>
+<p>Today we will formalise and clarify this structure, by introducing the concept of an <strong>algebra</strong>.</p>
+<blockquote>
+<p>Note: In an unfortunate abuse of notation, the word “algebra” is used with a few different meanings in the FP world. See the Appendix for more details on the terminology.</p>
+</blockquote>
+<p>An algebra is a structure consisting of four components:</p>
+<ol type="1">
+<li><p>A single, concrete type <code>T</code>, which is sometimes called the <strong>carrier</strong> of the algebra. Depending on the algebra, it can have different shapes: <code>V</code>, <code>F[A]</code>, <code>G[E, R]</code>, etc. The carrier type is the datatype that represents the particular effect its algebra encodes.</p></li>
+<li><p>A set of functions which return values of the carrier type <code>T</code>, called <strong>introduction forms</strong>. These functions can all take different inputs, but what characterises them as introduction forms is that none of their inputs is of the carrier type <code>T</code>, i.e. they <em>construct</em> or <em>introduce</em> <code>T</code>. Introduction forms are the <em>primitive programs</em> of their algebra, the starting points from which we can build more complex logic.</p></li>
+<li><p>A set of functions which return values of the carrier type <code>T</code>, called <strong>combinators</strong>. These functions can all take different inputs, but at least one of those inputs needs to be of the carrier type <code>T</code>. In other words, a combinator takes one or more programs in <code>T</code>, and returns another program in <code>T</code>.<br />
+Combinators are the essential building blocks of programs as values we’ve been talking about so far, they take smaller programs and construct bigger programs, often by explicitly describing some form of control flow. Most of the logic in your code will be expressed through combinators.</p></li>
+<li><p>A set of functions called <strong>elimination forms</strong>. They can all take different inputs, but one of those inputs needs to be of the carrier type <code>T</code>. Furthermore, their output needs to be a <em>different type</em> from <code>T</code>, i.e. they <em>eliminate</em> <code>T</code>.<br />
+Informally, elimination forms encode the concept of “running” a program written in a specific algebra after we’re done constructing it. The concept of running is however expressed as a <em>translation</em> from the carrier type <code>T</code> to another type.</p></li>
+</ol>
+<p>In some cases, algebras also have a fifth component: <strong>laws</strong>, i.e. equalities between programs written in the algebra. We won’t be talking much about laws in this post, but they will be more prominent later.</p>
+<p>So to recap, to build a program in a given algebra we start from the introduction forms, and use combinators to express all the logic we need. Once we’re done, we run it by translating it to another type via one of the elimination forms. Another way to look at it is that each algebra describes a <em>mini language</em>: we write programs in that language, and then translate them to another language, all the way to the most general language of all, which is, as we will see, <code>IO</code>.</p>
+<p>We’re now ready to look at some concrete examples.</p>
+<h2 id="the-doc-algebra">The Doc algebra</h2>
+<p>For our first example, we’re going to look at <a href="https://github.com/typelevel/paiges">paiges</a>, a pretty printing library that lets you generate text that needs to be well formatted, with paragraph wrapping at different line lengths. The entire library is centred around a document algebra, so let’s look at its components in more detail.</p>
+<p>The carrier type of the algebra is called <code>Doc</code>, which means we represent documents as programs of type <code>Doc</code>, like <code>val myDoc: Doc</code>. It might sound strange that we’re referring to a static artifact such as a document as a “program”, but you will see that the mindset we’re working in doesn’t change that much once we move to dynamic behavior with types such as <code>cats.effect.IO</code> or <code>cats.parse.Parser</code>.</p>
+<p>The introduction forms are the initial building blocks, as per their definition they create values of type <code>Doc</code> without requiring any value of type <code>Doc</code> as input. Here are a few:</p>
+<pre class="scala"><code>Doc.text: String =&gt; Doc
+Doc.char: Char =&gt; Doc
+Doc.spaces: Int =&gt; Doc
+Doc.comma: Doc
+Doc.line: Doc
+... // and more</code></pre>
+<p>Note that I’m showing them as functions to make the types clearer, but they are generally methods in Scala, so:</p>
+<pre class="scala"><code>val char: Char =&gt; Doc
+// is more typically written as
+def char(c: Char): Doc</code></pre>
+<p>also, they tend to appear in the companion object of the carrier type, but don’t use that as a strict rule, sometimes combinators are there too.</p>
+<p>Introduction forms have shape <code>(A, B, ..) =&gt; Doc</code>, so you might be wondering where do primitive values such as <code>comma</code> or <code>line</code> fit. You can think of them as introduction forms from <code>Unit</code> to the carrier:</p>
+<pre class="scala"><code>val comma: Doc
+// can be thought as
+val comma: () =&gt; Doc</code></pre>
+<p>Let’s now look at combinators, functions that take one or more values of type <code>Doc</code> and return a value of type <code>Doc</code>. Combinators will express the lion’s share of our logic, so much so that libraries based on algebras are often called <em>combinator libraries</em>. Here are a few:</p>
+<pre class="scala"><code>indent: (Doc, Int) =&gt; Doc
+line: (Doc, Doc) =&gt; Doc
+bracketBy: (Doc, Doc, Doc, Int) =&gt; Doc
+aligned: Doc =&gt; Doc
+stack: Iterable[Doc] =&gt; Doc
+... // and more</code></pre>
+<p>Again, I wrote them as standalone functions to make the types clearer, in reality they are written as instance methods, which obscures the fact that at least one of their inputs (<code>this</code>) is of type <code>Doc</code>:</p>
+<pre class="scala"><code>sealed trait Doc {
+  def indent(i: Int): Doc
+  def line(that: Doc): Doc
+  def bracketBy(left: Doc, right: Doc, indent: Int = 2): Doc
+  def aligned: Doc
+  ... 
+  
+object Doc {
+  def stack(ds: Iterable[Doc]): Doc
+  ... </code></pre>
+<p><code>Doc.stack</code> is a notable exception, it cannot be an instance method on <code>Doc</code> because it operates on a <em>collection</em> of docs. The same intuition about combinators applies though: <code>stack</code> combines programs in the <code>Doc</code> algebra into a bigger program in the <code>Doc</code> algebra.</p>
+<p>Finally, eliminations forms translate <code>Doc</code> programs to another type:</p>
+<pre class="scala"><code>isEmpty: Doc =&gt; Boolean
+maxWidth: Doc =&gt; Int
+render: (Doc, Int) =&gt; String</code></pre>
+<p>with the usual caveat that they are defined as instance methods:</p>
+<pre class="scala"><code>sealed trait Doc {
+  def isEmpty: Boolean
+  def maxWidth: Int
+  def render(width: Int): String</code></pre>
+<p>Equipped with this knowledge, we can now write <code>Doc</code> programs:</p>
+<pre class="scala"><code>import org.typelevel.paiges.Doc
+
+val openBracket: Doc = Doc.char('[')
+val closeBracket: Doc = Doc.char(']')
+
+val north: Doc = Doc.text(&quot;NORTH&quot;)
+val east: Doc = Doc.text(&quot;EAST&quot;)
+val south: Doc = Doc.text(&quot;SOUTH&quot;)
+val west: Doc = Doc.text(&quot;WEST&quot;)
+
+val directions: Doc = 
+  Doc
+    .stack(List(north, east, south, west))
+    .bracketBy(openBracket, closeBracket)</code></pre>
+<p>In the above, I’ve separated usages of introductions forms from combinators for extra clarity, but remember that referential transparency holds, so you can inline definitions or abstract them out freely. We can keep composing to build more complex programs:</p>
+<pre class="scala"><code>val output: Doc = 
+  Doc
+    .text(&quot;Directions:&quot;)
+    .line(directions.indent(2))
+    .bracketBy(Doc.space, Doc.space)</code></pre>
+<p>and once we’re done, we can “run” our <code>Doc</code> program by translating it to <code>String</code> via the <code>render</code> elimination form:</p>
+<pre class="scala"><code>output.render(width = 30)
+// res0: String = &quot;&quot;&quot; 
+//   Directions:
+//     [ NORTH EAST SOUTH WEST ]
+//  &quot;&quot;&quot;
+output.render(width = 15)
+// res1: String = &quot;&quot;&quot; 
+//   Directions:
+//     [
+//       NORTH
+//       EAST
+//       SOUTH
+//       WEST
+//     ]
+//  &quot;&quot;&quot;</code></pre>
+<h2 id="the-out-algebra">The Out algebra</h2>
+<p>Let’s now look at a made up algebra we’re going to call <code>Out</code>, whose <em>only</em> capability is to print Strings to stdout. It should provide a first, simple example of encoding behaviour, which is more in line with how we think about the word “program”.</p>
+<p>Here’s how it looks like:</p>
+<pre class="scala"><code>// Carrier type
+Out
+// Introduction forms
+print: String =&gt; Out
+// Combinators
+andThen: (Out, Out) =&gt; Out
+// Elimination forms
+run: Out =&gt; IO[Unit]</code></pre>
+<p>except we’re going to assume it’s written idiomatically, with <code>andThen</code> as an instance method and <code>print</code> as a method in the companion object of <code>Out</code>.</p>
+<p>Let’s write a program with it:</p>
+<pre class="scala"><code>object Logic {
+  val printNewline: Out = Out.print(&quot;\n&quot;)
+  
+  val helloWorld: Out = 
+    Out
+      .print(&quot;Hello, world!&quot;)
+      .andThen(printNewLine)
+      .andThen(Out.print(&quot;I'm a program!&quot;))
+}
+
+object Main extends IOApp.Simple {
+  def run: IO[Unit] = Logic.helloWorld.run
+}</code></pre>
+<pre class="scala"><code>Main.main(Array())
+
+// Hello, world!
+// I'm a program!</code></pre>
+<p>So the <code>Out</code> algebra lets us create simple imperative programs that are akin to:</p>
+<pre class="scala"><code>print(&quot;tea&quot;)
+print(&quot;coffee&quot;)</code></pre>
+<p>except we’re in programs as values, so we can easily write compositional code as programs that manipulate other programs. Here’s a basic example, we will see much more interesting ones once we work with algebras that encode complex control flow:</p>
+<pre class="scala"><code>def repeat(p: Out, n: Int): Out =
+  if n &lt;= 0 Out.print(&quot;&quot;)
+  else p.andThen(repeat(p, n - 1))</code></pre>
+<p>It’s significant that we can use <code>Out</code> without any knowledge of its internal structure: we only need to know the operations defined on it, or, in other words, its algebra. This style of <em>algebraic thinking</em> is very valuable, because it scales from datatypes with very simple internal structure, such as <code>Option</code>, all the way to highly sophisticated datatypes such as <code>IO</code> or <code>fs2.Stream</code>.</p>
+<p>Finally, note that there really is no difference in mechanics nor mindset between imperative-looking algebras such as <code>Out</code>, and algebras that encode static data such as <code>Doc</code>. In fact, we can literally implement <code>Out</code> with <code>Doc</code>:</p>
+<pre class="scala"><code>type Out = Doc
+def print(s: String): Out = Doc.text(s)
+def andThen(this: Out, that: Out): Out = this + that
+def run(p: Out): IO[Unit] = IO.println(p.render(Int.MaxValue))</code></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>In this article, we’ve talked about algebras, the fundamental structure at the heart of programs as values. Next time is when things really get interesting, as we’re going to enrich our algebras with the ability to handle <em>results</em>. See you then!</p>
+<hr />
+<h2 id="appendix-on-terminology">Appendix on terminology</h2>
+<p>Terminology can be a source of confusion, since it’s used loosely and inconsistently and mostly reflects historical connections between fields and communities.</p>
+<p>“Algebra” is a particularly overloaded term: the meaning we used in the article, which also appears in “Boolean algebra” and “Algebraic Data Types”, originates from a branch of Maths called Universal Algebra. It’s defined as:</p>
+<ul>
+<li>A set <code>A</code>, called the carrier.</li>
+<li>Some <em>finitary operations</em> on <code>A</code>: functions that take tuples of elements of <code>A</code> and return an element of <code>A</code>.</li>
+</ul>
+<p>which we called “carrier” and “combinators” respectively. The terms “introduction forms” and “elimination forms” come from logic via type theory instead.</p>
+<p>Universal Algebra also introduces the concept of a signature algebra, or <em>sigma algebra</em>, which defines the set of typed operation symbols without specifying the functions that would be the actual operations. Sigma algebras correspond roughly to the notion of “interface” in programming, and are often encoded in Scala via typeclasses.</p>
+<p>The issue is that FP terminology uses the word “algebra” to also mean “sigma algebra”, for example in the phrase “algebras and interpreters” which roughly corresponds to “abstractions and implementations” (the usage of the word “interpreter” comes from the theory of embedded domain specific languages, or eDSLs).</p>
+                <hr>
+            </div>
+        </div>
+    </div>
+</article>
+
+    </div>
+    <div id="footer">
+    </div>
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="feed.xml" data-datatype="json" data-type="GET" data-target="#frame" class="reload" id="clickme">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://github.com/SystemFw" target="_blank">
+                            <span class="fa-stack fa-lg">
+
+                                <i class="fa fa-arrow-circle-o-down"></i>
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a href="https://linkedin.com/in/fabiolabella" target="_blank">
+                            <span class="fa-stack fa-lg">
+
+                                <i class="fa fa-arrow-circle-o-down"></i>
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Fabio Labella 2019. <br><br>
+                </p>
+                <div class="col-md-12">
+                  <p class="copyright text-muted">
+                    Site generated by
+                    <a href="http://jaspervdj.be/hakyll" target="_blank">Hakyll</a>.
+                    Theme designed by
+                    <a href="https://github.com/katychuang" target="_blank">Katy Chuang</a>
+                    and can be found
+                    <a href="http://katychuang.com/hakyll-cssgarden/gallery/" target="_blank">here.</a>
+                  </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="../static/js/jquery.min.js"></script>
+<script src="../static/js/spaceg.stylesheets.min.js"></script>
+<script src="../static/js/bootstrap.min.js"></script>
+<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+<script src="../static/js/scripts.js"></script>
+
+</body>
+
+</html>

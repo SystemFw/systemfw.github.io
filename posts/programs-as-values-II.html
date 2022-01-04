@@ -379,6 +379,7 @@ object Main extends App {
     p.translateToActualEffects
 }</code></pre>
 <p>and believe it or not, that’s the whole idea: we represent effects as datatypes (i.e. <em>programs as values</em>), and we use functions to assemble big programs out of smaller ones. The rest comes down to discovering richer datatypes for our effects, and exploring the structure of the functions we use to combine them. And that is exactly what we are going to do next time.</p>
+<hr />
 <h2 id="appendix">Appendix</h2>
 <p>Although Scala goes further than most mainstream languages in its support for <code>being</code>, there are significant limitations in its approach.</p>
 <p>First of all, by-name parameters (<code>: =&gt; A</code>) don’t have their own type, which on one hand means that it’s not possible to use them as results, and on the other that mistakenly triggering evaluation too early and then passing the value will not trigger a type error.</p>
