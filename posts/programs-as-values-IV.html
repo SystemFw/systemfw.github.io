@@ -378,7 +378,7 @@ def print(s: String): Out = Doc.text(s)
 def andThen(this: Out, that: Out): Out = this + that
 def run(p: Out): IO[Unit] = IO.println(p.render(Int.MaxValue))</code></pre>
 <h2 id="conclusion">Conclusion</h2>
-<p>In this article, we’ve talked about algebras, the fundamental structure at the heart of programs as values. Next time is when things really get interesting, as we’re going to enrich our algebras with the ability to handle <em>results</em>. See you then!</p>
+<p>In this article, we’ve talked about algebras, the fundamental structure at the heart of programs as values. Next time is when things really get interesting, as we’re going to enrich our algebras with the ability to handle <em>outputs</em>. See you then!</p>
 <hr />
 <h2 id="appendix-on-terminology">Appendix on terminology</h2>
 <p>Terminology can be a source of confusion, since it’s used loosely and inconsistently and mostly reflects historical connections between fields and communities.</p>
