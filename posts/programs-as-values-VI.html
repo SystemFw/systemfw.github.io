@@ -1,0 +1,595 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <!-- Microsoft Internet Explorer documentMode compatMode setting IE Modus -->
+    <script type="text/javascript">
+        var IE = null;
+        if (window.navigator.appName == "Microsoft Internet Explorer") {
+            if (document.documentMode) {
+
+                IE = document.documentMode;
+            } else {
+
+                IE = 5;
+                if (document.compatMode) {
+                    if (document.compatMode == "CSS1Compat")
+                        IE = 11;
+                }
+            }
+        }
+    </script>
+
+    <meta charset="utf-8">
+    <!-- X-UA -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <link rel="author" title="Fabio Labella" href="SystemFw" />
+
+
+
+    <meta name="google" content="notranslate" />
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- index ROBOTS follow -->
+    <meta name="robots" content="index, follow" />
+    <!-- Site Desciption -->
+    
+    <meta name="description" content="SystemFw FP blog">
+    
+
+    <meta name="keywords" content="Fabio Labella, SystemFw, Functional Programming, Haskell, Scala">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="../static/img/avatar.jpg" type="image/jpeg-icon" />
+
+    <!-- Blog Title -->
+    
+    <title>Programs as Values, Part VI: Chaining</title>
+    
+
+    <!-- Property Metas -->
+    <meta property="og:image" content="static/img/ix.png" />
+    
+    <meta property="og:title" content="SystemFw FP blog" />
+    <meta property="og:site_name" content="SystemFw FP blog" />
+    
+
+    <!-- Canonical -->
+    <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">
+
+    <!-- StyleSheet -->
+    <link rel="stylesheet" href="../static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/spaceg.stylesheets.css">
+    <link rel="stylesheet" href="../static/css/syntax.css">
+
+    <!-- Syntax highlighting -->
+    
+    <link rel="stylesheet" href="../static/highlight/styles/zenburn.css">
+    <script src="../static/highlight/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic,900,900italic" rel="stylesheet" type="text/css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Playfair+Display:400,700,900,400italic,700italic,900italic" rel="stylesheet" type="text/css">
+    <!-- -->
+
+    <style>
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fff;
+            /* change if the mask should have another color then white */
+            z-index: 99;
+            /* makes sure it stays on top */
+        }
+
+        #status {
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            left: 50%;
+            /* centers the loading animation horizontally one the screen */
+            top: 50%;
+            /* centers the loading animation vertically one the screen */
+            background-image: url("/static/img/preloader.gif");
+            /* path to your loading animation */
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: -100px 0 0 -100px;
+            /* is width and height divided by two */
+        }
+
+        ul,
+        ol {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .navbar-inverse {
+            background-color: #FFF;
+            border-color: #FFFFFF;
+        }
+    </style>
+    <style>
+        header.intro-header {
+            background: #6f5499;
+            background: no-repeat center center;
+            background-attachment: scroll;
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            background-size: cover;
+            -o-background-size: cover;
+        }
+
+        /* Preloader */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fff;
+            /* change if the mask should have another color then white */
+            z-index: 99;
+            /* makes sure it stays on top */
+        }
+
+        #status {
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            left: 50%;
+            /* centers the loading animation horizontally one the screen */
+            top: 50%;
+            /* centers the loading animation vertically one the screen */
+            background-image: ;
+            /* path to your loading animation */
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: -100px 0 0 -100px;
+            /* is width and height divided by two */
+        }
+
+        li {
+            list-style: none;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+            padding-right: 0px;
+        }
+
+        article li {
+            list-style: inherit;
+        }
+
+        article .figure {
+            text-align: center
+        }
+    </style>
+    <!-- end Loading front stylesheet here -->
+</head>
+
+
+<body>
+    <div id="preloader">
+        <div id="status">
+
+        </div>
+
+    </div>
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="\" id="blog-title-left-top">SystemFw</a>
+        </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="../about.html" target="_blank">About</a></li>
+            <li><a href="../archive.html">Posts</a></li>
+            <li><a href="../writings.html">Writings</a></li>
+            <li><a href="../talks.html">Talks</a></li>
+            <li><a href="https://www.github.com/SystemFw" id="roundbutton" target="_blank"><i class="fa fa-github"></i>Projects</a></li>
+          </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+
+    <div id="content">
+        <header class="title-header" alt title>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Programs as Values, Part VI: Chaining</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Page Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <p>I’m now going to introduce the <code>Console</code> algebra, an evolution of <a href="https://systemfw.org/posts/programs-as-values-IV.html">Out</a> and <a href="https://systemfw.org/posts/programs-as-values-V.html">In</a> that will accompany us for the next few instalments of this series.</p>
+<p>We will start from an imperfect version, here’s how it looks like:</p>
+<pre class="scala"><code>/*
+ * carrier:
+ *   Console[A]
+ *     where A represents the output of a Console program
+ * introduction forms:
+ *   readLine: Console[String]
+ *   print: String =&gt; Console[Unit]
+ * combinators:
+ *   andThen[A]: (Console[A], Console[A]) =&gt; Console[A]
+ *   transformOutput[A, B]: (Console[A], A =&gt; B) =&gt; Console[B]
+ * elimination forms:
+ *   run[A]: Console[A] =&gt; IO[A]
+ */
+ sealed trait Console[A] {
+   def andThen(next: Console[A]): Console[A]
+   def transformOutput[B](transform: A =&gt; B): Console[B]
+
+   def run: IO[A]
+   ...
+ object Console {
+   val readLine: Console[String]
+   def print(s: String): Console[Unit]
+   ...</code></pre>
+<p><code>readLine</code> and <code>transformOutput</code> have a familiar shape, but <code>print</code> and <code>andThen</code> need to fit the <code>Console[A]</code> shape, so we use the <code>Unit</code> type to express that printing has no meaningful output:</p>
+<pre class="scala"><code>def print(s: String): Console[Unit]</code></pre>
+<p>and parameterise <code>andThen</code> with <code>A</code> everywhere:</p>
+<pre class="scala"><code>// andThen[A]: (Console[A], Console[A]) =&gt; Console[A]
+
+sealed trait Console[A] {
+   def andThen(next: Console[A]): Console[A]
+   ...</code></pre>
+<p>and we can write <code>Console</code> programs!</p>
+<pre class="scala"><code>val helloWorld: Console[Unit] =
+  Console.print(&quot;Hello &quot;).andThen(Console.print(&quot;World!&quot;))
+
+val inputLength: Console[Int] =
+  Console.readLine.transformOutput(line =&gt; line.length)</code></pre>
+<p>Obviously to actually execute these programs, they have to be converted to <code>IO</code> via <code>run</code> and then embedded into an <code>IOApp</code>, but we will ignore the elimination form for the remainder of the article, and focus on writing programs with <code>Console</code>.</p>
+<h2 id="a-sample-program">A sample program</h2>
+<p>We will explore and evolve the <code>Console</code> algebra whilst trying to write the following program:</p>
+<ul>
+<li>Ask the user to enter their username.</li>
+<li>Read it from stdin.</li>
+<li>Create a greeting message like <code>&quot;Hello, $username!&quot;</code>.</li>
+<li>Print the message to stdout.</li>
+<li>Extra: if the username at point 2 is empty, ask again.</li>
+</ul>
+<p>We will do it in pieces, starting from a simple prompt that doesn’t handle empty usernames:</p>
+<pre class="scala"><code>val namePrompt: Console[String] =
+  Console
+    .print(&quot;What's your username? &quot;)
+    .andThen(Console.readLine)
+
+type mismatch;
+[error]  found   : Console[String]
+[error]  required: Console[Unit]
+[error]       .andThen(Console.readLine)
+[error]                        ^</code></pre>
+<p>Uh-oh, it doesn’t compile: <code>andThen</code> wants both arguments to be <code>Console</code> programs with the same type of output, but <code>print(s)</code> and <code>readLine</code> have different output types, respectively <code>Console[Unit]</code> and <code>Console[String]</code>.</p>
+<p>This limitation doesn’t seem reasonable, so let’s relax the type of <code>andThen</code> to allow the second program to have a different output type, which will also be the output type of the overall expression:</p>
+<pre class="scala"><code>// andThen[A, B]: (Console[A], Console[B]) =&gt; Console[B]
+
+sealed trait Console[A] {
+  def andThen[B](next: Console[B]): Console[B]
+  ...</code></pre>
+<p>and we can write <code>namePrompt</code> unchanged:</p>
+<pre class="scala"><code>val namePrompt: Console[String] =
+  Console
+    .print(&quot;What's your username? &quot;)
+    .andThen(Console.readLine)</code></pre>
+<p>Next step is to create the greeting message, which sounds like a job for <code>transformOutput</code>:</p>
+<pre class="scala"><code>val promptWithGreeting: Console[String] =
+  Console
+    .print(&quot;What's your username? &quot;)
+    .andThen(Console.readLine)
+    .transformOutput { username =&gt; s&quot;Hello, $username!&quot; }</code></pre>
+<p>Ok we’re getting there, all that’s left to do now is to print the greeting message to stdout. And here we stumble onto an interesting problem.</p>
+<h2 id="chaining">Chaining</h2>
+<p>The program we need to write has to print something we’ve previously read (and transformed). In slightly more general terms, it needs to use the <em>output</em> of our <code>promptWithGreeting</code> program to build another program, the program that prints that output.</p>
+<p>In execution as evaluation, this idea is expressed by actually running an action and naming its result:</p>
+<pre class="scala"><code>val input: String = readLine()
+println(input)</code></pre>
+<p>but as usual, we want to compose programs instead.</p>
+<p>What we need is a change in perspective: whenever we need the output of a program <code>p1: Console[A]</code> to build another program <code>p2: Console[B]</code>, that means that <code>p2</code> <em>depends</em> on the output of <code>p1</code>.</p>
+<p>We’ve seen that the output of a <code>Console[A]</code> program is represented by its output type parameter <code>A</code>, and the idea that <code>Y</code> depends on <code>X</code> is expressed by a function <code>X =&gt; Y</code>, so the concept that <code>p2: Console[B]</code> depends on the output of <code>p1: Console[A]</code> can be written as <code>A =&gt; Console[B]</code>.</p>
+<p>And therein lies our problem, the only combinator that can connect two <code>Console</code> programs is <code>andThen</code>, and we can see from its type that there is no dependency between the two programs it takes as input:</p>
+<pre class="scala"><code>// andThen[A, B]: (Console[A], Console[B]) =&gt; Console[B]
+
+sealed trait Console[A] {
+  def andThen[B](next: Console[B]): Console[B]
+  ...</code></pre>
+<p>Let’s instead introduce a new <code>chain</code> combinator which takes dependency into account. It will take a <code>Console[A]</code> program, and a function that uses the output of that program to decide what the next program should be:</p>
+<pre class="scala"><code>// chain[A, B]: (Console[A], A =&gt; Console[B]) =&gt; Console[B]
+
+sealed trait Console[A] {
+  def chain[B](next: A =&gt; Console[B]): Console[B]
+  ...</code></pre>
+<p>Equipped with <code>chain</code>, we can now easily print something we’ve read:</p>
+<pre class="scala"><code>val echo: Console[Unit] =
+  Console.readLine.chain { input =&gt;
+    Console.print(input)
+  }
+
+// Same, but with explicit annotations for every type:
+val echo: Console[Unit] =
+  // chain: (Console[String], String =&gt; Console[Unit]) =&gt; Console[Unit]
+  (Console.readLine: Console[String]).chain {
+     (
+       (input: String) =&gt;
+          Console.print(input): Console[Unit]
+     ): String =&gt; Console[Unit]
+  }: Console[Unit]
+</code></pre>
+<p>and indeed express our target program:</p>
+<pre class="scala"><code>val promptAndGreet: Console[Unit] =
+  Console
+    .print(&quot;What's your username? &quot;)
+    .chain_(Console.readLine)
+    .transformOutput { username =&gt; s&quot;Hello, $username!&quot; }
+    .chain { greeting =&gt; Console.print(greeting) }</code></pre>
+<p>Note that in <code>promptAndGreet</code> we’ve replaced <code>print.andThen(readLine)</code> with <code>print.chain_(readLine)</code>, where <code>chain_</code> is defined as :</p>
+<pre><code>fa.chain_(fb) &lt;-&gt;  fa.chain { _ =&gt; fb }</code></pre>
+<p>i.e. a special case of <code>chain</code> where the shape of the next program doesn’t depend on the output of the previous one, and can ignore it.</p>
+<p>The ability to depend on the output of a previous computation via <code>chain</code> has clearly gained us some power, but just how much power exactly? As it turns out, a huge amount: <code>next: A =&gt; Console[B]</code> can use <code>A</code> in <em>arbitrary</em> ways to decide what the next computation should be. In <code>nameAndGreet</code> we simply passed it through, but <code>next</code> could include <code>if/else</code> expressions, recursion, pattern matching…or in other words, <em>general control flow</em>.</p>
+<h2 id="emitting-outputs">Emitting outputs</h2>
+<p>Here’s how our sample program looks like so far, with some minimal refactoring:</p>
+<pre class="scala"><code>val namePrompt: Console[String] =
+  Console
+    .print(&quot;What's your username? &quot;)
+    .chain_(Console.readLine)
+
+val promptAndGreet: Console[Unit] =
+  namePrompt
+    .transformOutput { username =&gt; s&quot;Hello, $username!&quot; }
+    .chain { greeting =&gt; Console.print(greeting) }</code></pre>
+<p>The only piece left is asking for a username again if the user inserts an empty one. We could go and modify <code>namePrompt</code> accordingly, but when you think about it there isn’t much about this logic that is actually specific to <code>namePrompt</code>: we simply want to repeat a <code>p: Console[String]</code> until its output is non empty.</p>
+<p>We’re in programs as values, so programs that manipulate other programs are our bread and butter:</p>
+<pre class="scala"><code>def repeatOnEmpty(p: Console[String]): Console[String] = ???</code></pre>
+<p>So how do we implement <code>repeatOnEmpty</code>? We need to use the string outputted by <code>p</code> to make a decision based on whether it’s empty or not, which is to say we need <code>chain</code>:</p>
+<pre class="scala"><code>def repeatOnEmpty(p: Console[String]): Console[String] =
+  p.chain { str =&gt;
+    if (str.isEmpty) ???
+    else ???
+  }</code></pre>
+<p>if the string is indeed empty, we simply repeat the whole process using recursion:</p>
+<pre class="scala"><code>def repeatOnEmpty(p: Console[String]): Console[String] =
+  p.chain { str =&gt;
+    if (str.isEmpty) repeatOnEmpty(p)
+    else ???
+  }</code></pre>
+<p>and if it’s non empty, that’s the output of our <code>Console</code> program:</p>
+<pre class="scala"><code>def repeatOnEmpty(p: Console[String]): Console[String] =
+  p.chain { str =&gt;
+    if (str.isEmpty) repeatOnEmpty(p)
+    else str
+  }
+
+type mismatch;
+[error]  found   : String
+[error]  required: Console[String]
+[error]       else str
+[error]            ^</code></pre>
+<p>Oh, another compile error… both branches of an <code>if/else</code> need to have the same type, whereas in our case the <code>if</code> branch has type <code>Console[String]</code>, and the <code>else</code> branch has type <code>String</code>.</p>
+<p>On second thought, it doesn’t make sense for <code>repeatOnEmpty</code> to return a <code>String</code>: <code>repeatOnEmpty</code> needs to return a <em>program</em>, i.e. an instance of a datatype that represents commands that will eventually be executed, and a <code>String</code> is not the same thing as a command to emit one. This means that our <code>Console</code> algebra is missing an introduction form, the ability to emit an output:</p>
+<pre class="scala"><code>// emitOutput[A]: A =&gt; Console[A]
+
+object Console {
+  def emitOutput[A](a: A): Console[A]
+  ...</code></pre>
+<p>and there we have it:</p>
+<pre class="scala"><code>def repeatOnEmpty(p: Console[String]): Console[String] =
+  p.chain { str =&gt;
+    if (str.isEmpty) repeatOnEmpty(p)
+    else Console.emitOutput(str)
+  }</code></pre>
+<h2 id="the-final-program">The final program</h2>
+<p>Here’s what the final version of <code>Console</code> looks like:</p>
+<pre class="scala"><code>/*
+ * carrier:
+ *   Console[A]
+ *     where A represents the output of a Console program
+ * introduction forms:
+ *   readLine: Console[String]
+ *   print: String =&gt; Console[Unit]
+ *   emitOutput[A]: A =&gt; Console[A]
+ * combinators:
+ *   chain[A, B]: (Console[A], A =&gt; Console[B]) =&gt; Console[B]
+ *   chain_[B]: (Console[A], Console[B]) =&gt; Console[B]
+ *   transformOutput[A, B]: (Console[A], A =&gt; B) =&gt; Console[B]
+ * elimination forms:
+ *   run[A]: Console[A] =&gt; IO[A]
+ */
+ sealed trait Console[A] {
+   def chain[B](next: A =&gt; Console[B]): Console[B]
+   def chain_[B](next: Console[B]): Console[B] =
+     chain(_ =&gt; next)
+   def transformOutput[B](transform: A =&gt; B): Console[B]
+
+   def run: IO[A]
+   ...
+ object Console {
+   val readLine: Console[String]
+   def print(s: String): Console[Unit]
+   def emitOutput[A](out: A): Console[A]
+   ...</code></pre>
+<p>and here’s our final program:</p>
+<pre class="scala"><code>def repeatOnEmpty(p: Console[String]): Console[String] =
+  p.chain { str =&gt;
+    if (str.isEmpty) repeatOnEmpty(p)
+    else Console.emitOutput(str)
+  }
+
+val namePrompt: Console[String] =
+  Console
+    .print(&quot;What's your username? &quot;)
+    .chain_(Console.readLine)
+
+val promptAndGreet: Console[Unit] =
+  repeatOnEmpty(namePrompt)
+    .transformOutput { username =&gt; s&quot;Hello, $username!&quot; }
+    .chain { greeting =&gt; Console.print(greeting) }</code></pre>
+<h4 id="note-on-conciseness">Note on conciseness</h4>
+<p>You might be thinking that our program above is rather verbose compared to just:</p>
+<pre class="scala"><code> def p: Unit = {
+   var user: String = &quot;&quot;
+   while (user.isEmpty) {
+     println(&quot;What's your username?&quot;)
+     user = scala.io.StdIn.readLine()
+   }
+   println(s&quot;Hello, $user!&quot;)
+ }</code></pre>
+<p>but remember that I’m really spelling things out in the examples. Here’s how it looks like in real code, using <code>cats.effect.IO</code> and combinators defined in the <a href="github.com/typelevel/cats">cats</a> library:</p>
+<pre class="scala"><code>  val p: IO[Unit] =
+    (IO.println(&quot;What's your name?&quot;) &gt;&gt; IO.readLine)
+      .iterateWhile(_.isEmpty)
+      .flatMap { user =&gt; IO.println(s&quot;Hello, $user!&quot;) }</code></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>In this article we saw the essential concept of <em>chaining</em>: creating programs that can depend on the output of a previous program. Chaining represents a big leap in the expressiveness of our algebras, as we are now able to express <em>arbitrary sequential control flow</em>.</p>
+<p>Next time we will explore some of properties of <code>chain</code> and <code>emitOutput</code>, as well as introducing the real names used in <a href="github.com/typelevel/cats">cats</a> and <a href="github.com/typelevel/cats-effect">cats-effect</a>, as we make our way towards writing real code in programs as values.</p>
+<h2 id="appendix-implementation">Appendix: implementation</h2>
+<p>This series puts a big stress on <em>algebraic thinking</em>: reasoning on programs as values datatypes using the operations defined on them rather than their internal structure. This is a powerful approach because it scales from simple datatypes like <code>Option</code>, to datatypes like <code>IO</code> whose internal structure and implementation is extremely advanced.</p>
+<p>However, there is a risk that you might think that “command” datatypes like <code>Console</code> are utterly magical, so I’m going to make an exception and show you an implementation for it:</p>
+<pre class="scala"><code>sealed trait Console[A] {
+  def chain[B](next: A =&gt; Console[B]): Console[B] =
+    Console.Chain(this, next)
+
+  def chain_[B](next: Console[B]): Console[B] =
+    chain(_ =&gt; next)
+
+  def transformOutput[B](transform: A =&gt; B): Console[B] =
+    // curious about this? We'll talk about it next time!
+    chain { output =&gt;
+      Console.emitOutput(transform(output))
+    }
+
+  def run: IO[A] =
+    Console.translateToIO(this)
+}
+object Console {
+  def readLine: Console[String] =
+    ReadLine
+
+  def print(s: String): Console[Unit] =
+    Print(s)
+
+  def emitOutput[A](a: A): Console[A] =
+    EmitOutput(a)
+
+  case object ReadLine extends Console[String]
+  case class Print(s: String) extends Console[Unit]
+  case class EmitOutput[A](a: A) extends Console[A]
+  case class Chain[AA, A](fa: Console[AA], f: AA =&gt; Console[A])
+      extends Console[A]
+
+  def translateToIO[A](c: Console[A]): IO[A] = c match {
+    case Console.ReadLine =&gt; IO.readLine
+    case Console.Print(s) =&gt; IO.println(s)
+    case Console.EmitOutput(a) =&gt; IO.pure(a)
+    case Console.Chain(fa, f) =&gt;
+      translateToIO(fa).flatMap(x =&gt; translateToIO(f(x)))
+  }
+}</code></pre>
+<p>As you can see, we really do mean programs are <em>values</em>: <code>Console</code> is literally a datatype, which then gets translated to <code>IO</code>, which is another datatype. All the execution happens in the layer that interprets <code>IO</code> into actual side effects when the JVM calls <code>main</code>, as we will see once our series gets to discussing <code>IO</code>.</p>
+                <hr>
+            </div>
+        </div>
+    </div>
+</article>
+
+    </div>
+    <div id="footer">
+    </div>
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="feed.xml" data-datatype="json" data-type="GET" data-target="#frame" class="reload" id="clickme">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://github.com/SystemFw" target="_blank">
+                            <span class="fa-stack fa-lg">
+
+                                <i class="fa fa-arrow-circle-o-down"></i>
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a href="https://linkedin.com/in/fabiolabella" target="_blank">
+                            <span class="fa-stack fa-lg">
+
+                                <i class="fa fa-arrow-circle-o-down"></i>
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Fabio Labella 2019. <br><br>
+                </p>
+                <div class="col-md-12">
+                  <p class="copyright text-muted">
+                    Site generated by
+                    <a href="http://jaspervdj.be/hakyll" target="_blank">Hakyll</a>.
+                    Theme designed by
+                    <a href="https://github.com/katychuang" target="_blank">Katy Chuang</a>
+                    and can be found
+                    <a href="http://katychuang.com/hakyll-cssgarden/gallery/" target="_blank">here.</a>
+                  </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="../static/js/jquery.min.js"></script>
+<script src="../static/js/spaceg.stylesheets.min.js"></script>
+<script src="../static/js/bootstrap.min.js"></script>
+<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+<script src="../static/js/scripts.js"></script>
+
+</body>
+
+</html>
