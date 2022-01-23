@@ -315,7 +315,7 @@ sealed trait Console[A] {
 <h2 id="chaining">Chaining</h2>
 <p>The program we need to write has to print something we’ve previously read (and transformed). In slightly more general terms, it needs to use the <em>output</em> of our <code>promptWithGreeting</code> program to build another program, the program that prints that output.</p>
 <p>In execution as evaluation, this idea is expressed by actually running an action and naming its result:</p>
-<pre class="scala"><code>val input: String = readLine()
+<pre class="scala"><code>val input: String = scala.io.StdIn.readLine()
 println(input)</code></pre>
 <p>but as usual, we want to compose programs instead.</p>
 <p>What we need is a change in perspective: whenever we need the output of a program <code>p1: Console[A]</code> to build another program <code>p2: Console[B]</code>, that means that <code>p2</code> <em>depends</em> on the output of <code>p1</code>.</p>
@@ -352,19 +352,17 @@ val echo: Console[Unit] =
 <pre class="scala"><code>val promptAndGreet: Console[Unit] =
   Console
     .print(&quot;What's your username? &quot;)
-    .chain_(Console.readLine)
+    .chain(_ =&gt; Console.readLine)
     .transformOutput { username =&gt; s&quot;Hello, $username!&quot; }
     .chain { greeting =&gt; Console.print(greeting) }</code></pre>
-<p>Note that in <code>promptAndGreet</code> we’ve replaced <code>print.andThen(readLine)</code> with <code>print.chain_(readLine)</code>, where <code>chain_</code> is defined as :</p>
-<pre><code>fa.chain_(fb) &lt;-&gt;  fa.chain { _ =&gt; fb }</code></pre>
-<p>i.e. a special case of <code>chain</code> where the shape of the next program doesn’t depend on the output of the previous one, and can ignore it.</p>
-<p>The ability to depend on the output of a previous computation via <code>chain</code> has clearly gained us some power, but just how much power exactly? As it turns out, a huge amount: <code>next: A =&gt; Console[B]</code> can use <code>A</code> in <em>arbitrary</em> ways to decide what the next computation should be. In <code>nameAndGreet</code> we simply passed it through, but <code>next</code> could include <code>if/else</code> expressions, recursion, pattern matching…or in other words, <em>general control flow</em>.</p>
+<p>Note that in <code>promptAndGreet</code> we’ve replaced <code>print.andThen(readLine)</code> with <code>print.chain(_ =&gt; readLine)</code>, i.e. a special case of <code>chain</code> where the shape of the next program doesn’t depend on the output of the previous one, and can ignore it.</p>
+<p>The ability to depend on the output of another computation has clearly gained us some power, but just how much power exactly? As it turns out, a huge amount: <code>next: A =&gt; Console[B]</code> can use <code>A</code> in <em>arbitrary</em> ways to decide what the next computation should be. In <code>nameAndGreet</code> we simply passed it through, but <code>next</code> could include <code>if/else</code> expressions, recursion, pattern matching, and so on. In other words, <code>chain</code> allows <em>general control flow</em>.</p>
 <h2 id="emitting-outputs">Emitting outputs</h2>
 <p>Here’s how our sample program looks like so far, with some minimal refactoring:</p>
 <pre class="scala"><code>val namePrompt: Console[String] =
   Console
     .print(&quot;What's your username? &quot;)
-    .chain_(Console.readLine)
+    .chain(_ =&gt; Console.readLine)
 
 val promptAndGreet: Console[Unit] =
   namePrompt
@@ -422,15 +420,12 @@ object Console {
  *   emitOutput[A]: A =&gt; Console[A]
  * combinators:
  *   chain[A, B]: (Console[A], A =&gt; Console[B]) =&gt; Console[B]
- *   chain_[B]: (Console[A], Console[B]) =&gt; Console[B]
  *   transformOutput[A, B]: (Console[A], A =&gt; B) =&gt; Console[B]
  * elimination forms:
  *   run[A]: Console[A] =&gt; IO[A]
  */
  sealed trait Console[A] {
    def chain[B](next: A =&gt; Console[B]): Console[B]
-   def chain_[B](next: Console[B]): Console[B] =
-     chain(_ =&gt; next)
    def transformOutput[B](transform: A =&gt; B): Console[B]
 
    def run: IO[A]
@@ -450,7 +445,7 @@ object Console {
 val namePrompt: Console[String] =
   Console
     .print(&quot;What's your username? &quot;)
-    .chain_(Console.readLine)
+    .chain(_ =&gt; Console.readLine)
 
 val promptAndGreet: Console[Unit] =
   repeatOnEmpty(namePrompt)
@@ -480,9 +475,6 @@ val promptAndGreet: Console[Unit] =
 <pre class="scala"><code>sealed trait Console[A] {
   def chain[B](next: A =&gt; Console[B]): Console[B] =
     Console.Chain(this, next)
-
-  def chain_[B](next: Console[B]): Console[B] =
-    chain(_ =&gt; next)
 
   def transformOutput[B](transform: A =&gt; B): Console[B] =
     // curious about this? We'll talk about it next time!
