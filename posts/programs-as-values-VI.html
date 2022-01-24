@@ -270,7 +270,7 @@ sealed trait Console[A] {
 <pre class="scala"><code>val helloWorld: Console[Unit] =
   Console.print(&quot;Hello &quot;).andThen(Console.print(&quot;World!&quot;))
 
-val inputLength: Console[Int] =
+val lineLength: Console[Int] =
   Console.readLine.transformOutput(line =&gt; line.length)</code></pre>
 <p>Obviously to actually execute these programs, they have to be converted to <code>IO</code> via <code>run</code> and then embedded into an <code>IOApp</code>, but we will ignore the elimination form for the remainder of the article, and focus on writing programs with <code>Console</code>.</p>
 <h2 id="a-sample-program">A sample program</h2>
@@ -315,8 +315,8 @@ sealed trait Console[A] {
 <h2 id="chaining">Chaining</h2>
 <p>The program we need to write has to print something we’ve previously read (and transformed). In slightly more general terms, it needs to use the <em>output</em> of our <code>promptWithGreeting</code> program to build another program, the program that prints that output.</p>
 <p>In execution as evaluation, this idea is expressed by actually running an action and naming its result:</p>
-<pre class="scala"><code>val input: String = scala.io.StdIn.readLine()
-println(input)</code></pre>
+<pre class="scala"><code>val line: String = scala.io.StdIn.readLine()
+println(line)</code></pre>
 <p>but as usual, we want to compose programs instead.</p>
 <p>What we need is a change in perspective: whenever we need the output of a program <code>p1: Console[A]</code> to build another program <code>p2: Console[B]</code>, that means that <code>p2</code> <em>depends</em> on the output of <code>p1</code>.</p>
 <p>We’ve seen that the output of a <code>Console[A]</code> program is represented by its output type parameter <code>A</code>, and the idea that <code>Y</code> depends on <code>X</code> is expressed by a function <code>X =&gt; Y</code>, so the concept that <code>p2: Console[B]</code> depends on the output of <code>p1: Console[A]</code> can be written as <code>A =&gt; Console[B]</code>.</p>
@@ -334,8 +334,8 @@ sealed trait Console[A] {
   ...</code></pre>
 <p>Equipped with <code>chain</code>, we can now easily print something we’ve read:</p>
 <pre class="scala"><code>val echo: Console[Unit] =
-  Console.readLine.chain { input =&gt;
-    Console.print(input)
+  Console.readLine.chain { line =&gt;
+    Console.print(line)
   }
 
 // Same, but with explicit annotations for every type:
@@ -343,8 +343,8 @@ val echo: Console[Unit] =
   // chain: (Console[String], String =&gt; Console[Unit]) =&gt; Console[Unit]
   (Console.readLine: Console[String]).chain {
      (
-       (input: String) =&gt;
-          Console.print(input): Console[Unit]
+       (line: String) =&gt;
+          Console.print(line): Console[Unit]
      ): String =&gt; Console[Unit]
   }: Console[Unit]
 </code></pre>

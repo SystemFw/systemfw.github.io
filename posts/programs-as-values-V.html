@@ -322,7 +322,7 @@ object In {
 <p>and use it to express our original program:</p>
 <pre class="scala"><code>val prog: In[Boolean] =
   readLine
-    .transformOutput(input =&gt; input.length)
+    .transformOutput(line =&gt; line.length)
     .transformOutput(length =&gt; length &gt; 10)</code></pre>
 <p>Finally, we need to complete <code>In</code> with an elimination form so that we can embed it into bigger programs, as usual we will translate to <code>IO</code>:</p>
 <pre class="scala"><code>/*
@@ -347,11 +347,11 @@ object In {
 <p>You might be wondering why I have written the final program as:</p>
 <pre class="scala"><code>val prog1: In[Boolean] =
   readLine
-    .transformOutput(input =&gt; input.length)
+    .transformOutput(line =&gt; line.length)
     .transformOutput(length =&gt; length &gt; 10)</code></pre>
 <p>as opposed to:</p>
 <pre class="scala"><code>val prog2: In[Boolean] =
-  readLine.transformOutput(input =&gt; input.length &gt; 10)</code></pre>
+  readLine.transformOutput(line =&gt; line.length &gt; 10)</code></pre>
 <p><code>prog2</code> seems less verbose, so should we refactor <code>prog1</code> into <code>prog2</code>? Will the behaviour change? Intuitively, it would feel really weird if it did: transforming the output twice ought to be the same of transforming it once with the composite transformation.</p>
 <p>We can encode this type of assumption as a <em>law</em>, something of shape:</p>
 <pre class="scala"><code>expr1 &lt;-&gt; expr2</code></pre>
