@@ -266,7 +266,7 @@ object In {
   val readLine: In
   ...</code></pre>
 <p>in order to write:</p>
-<pre class="scala"><code>val out: Boolean = readLine.run.length &gt; 10</code></pre>
+<pre class="scala"><code>val out: Boolean = readLine.nope.length &gt; 10</code></pre>
 <p>but this is not a fruitful direction: we are basically saying that the only way to change the output of a program written in the <code>In</code> algebra is to eliminate the algebra entirely.</p>
 <p>Algebras are our unit of composition, therefore with the elimination approach any program that needs to change its output can no longer be composed, which is a <em>really</em> strong limitation: for example in <a href="https://systemfw.org/posts/programs-as-values-III.html">Part III</a> we saw that for <code>IO</code> elimination happens when the JVM calls <code>main</code>, it would be really weird if we couldn’t encode something as simple as <code>String.length</code> until then.</p>
 <p>Instead, we want to have the ability to transform outputs without leaving our algebra, and therefore we have to enrich it with a <code>transformOutput</code> <em>combinator</em>. Recall that the general shape of a combinator is:</p>
