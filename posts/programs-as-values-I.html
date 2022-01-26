@@ -282,12 +282,13 @@ Stream.repeatEval(p)
 <li><code>metered</code> is the program that executes another program at the given rate.</li>
 </ul>
 <p>Even without understanding all the details, it should be clear that it maintains this compositional quality in the more complex example too:</p>
-<pre class="scala"><code>def randomWait =
+<pre class="scala"><code>val randomWait =
   Stream
-    .random[IO]
-    .evalMap(n =&gt; IO.sleep(n.nanos))
+    .eval(Random.scalaUtilRandom[IO])
+    .flatMap { random =&gt; Stream.repeatEval(random.nextInt) }
+    .evalMap { n =&gt; IO.sleep(n.nanos) }
 
-def hello = IO.println(&quot;hello&quot;)
+val hello = IO.println(&quot;hello&quot;)
 
 Stream
   .repeatEval(hello)

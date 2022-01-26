@@ -469,6 +469,7 @@ val promptAndGreet: Console[Unit] =
 <h2 id="conclusion">Conclusion</h2>
 <p>In this article we saw the essential concept of <em>chaining</em>: creating programs that can depend on the output of a previous program. Chaining represents a big leap in the expressiveness of our algebras, as we are now able to express <em>arbitrary sequential control flow</em>.</p>
 <p>Next time we will explore some of properties of <code>chain</code> and <code>emitOutput</code>, as well as introducing the real names used in <a href="github.com/typelevel/cats">cats</a> and <a href="github.com/typelevel/cats-effect">cats-effect</a>, as we make our way towards writing real code in programs as values.</p>
+<hr />
 <h2 id="appendix-implementation">Appendix: implementation</h2>
 <p>This series puts a big stress on <em>algebraic thinking</em>: reasoning on programs as values datatypes using the operations defined on them rather than their internal structure. This is a powerful approach because it scales from simple datatypes like <code>Option</code>, to datatypes like <code>IO</code> whose internal structure and implementation is extremely advanced.</p>
 <p>However, there is a risk that you might think that “command” datatypes like <code>Console</code> are utterly magical, so I’m going to make an exception and show you an implementation for it:</p>

@@ -443,12 +443,13 @@ x + x</code></pre>
 listA.traverse(i =&gt; myIO(i))
 (ioA, ioB).parMapN(f)</code></pre>
 <p>and the same approach scales all the way to very rich, compositional apis:</p>
-<pre class="scala"><code>def randomWait =
+<pre class="scala"><code>val randomWait =
   Stream
-    .random[IO]
-    .evalMap(n =&gt; IO.sleep(n.nanos))
+    .eval(Random.scalaUtilRandom[IO])
+    .flatMap { random =&gt; Stream.repeatEval(random.nextInt) }
+    .evalMap { n =&gt; IO.sleep(n.nanos) }
 
-def hello = IO.println(&quot;hello&quot;)
+val hello = IO.println(&quot;hello&quot;)
 
 Stream
   .repeatEval(hello)
