@@ -398,15 +398,15 @@ prompt(&quot;What's your name?&quot;)
   scala.io.StdIn.readLine()
 }
 
-val name: String = prompt(&quot;What's your name&quot;)
-val location: String = {
-  val food: String = prompt(s&quot;Hello $name, what's your favourite food?&quot;)
-  prompt(s&quot;I like $food too! And where are you from?&quot;)
-}
-         &lt;-&gt;
 val name: String = prompt(&quot;What's your name?&quot;)
 val food: String = prompt(s&quot;Hello $name, what's your favourite food?&quot;)
-val location: String = prompt(s&quot;I like $food too! And where are you from?&quot;)</code></pre>
+prompt(s&quot;I like $food too! And where are you from?&quot;)
+        &lt;-&gt;
+val food: String = {
+  val name: String = prompt(&quot;What's your name&quot;)
+  prompt(s&quot;Hello $name, what's your favourite food?&quot;)
+}
+prompt(s&quot;I like $food too! And where are you from?&quot;)</code></pre>
 <p>Let’s conclude with an example of using laws to refactor one of our greeting programs:</p>
 <pre class="scala"><code>Console
   .readLine
