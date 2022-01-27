@@ -271,7 +271,9 @@ sealed trait Console[A] {
   Console.print(&quot;Hello &quot;).andThen(Console.print(&quot;World!&quot;))
 
 val lineLength: Console[Int] =
-  Console.readLine.transformOutput(line =&gt; line.length)</code></pre>
+  Console
+    .readLine
+    .transformOutput { line =&gt; line.length }</code></pre>
 <p>Obviously to actually execute these programs, they have to be converted to <code>IO</code> via <code>run</code> and then embedded into an <code>IOApp</code>, but we will ignore the elimination form for the remainder of the article, and focus on writing programs with <code>Console</code>.</p>
 <h2 id="a-sample-program">A sample program</h2>
 <p>We will explore and evolve the <code>Console</code> algebra whilst trying to write the following program:</p>
@@ -352,7 +354,7 @@ val echo: Console[Unit] =
 <pre class="scala"><code>val promptAndGreet: Console[Unit] =
   Console
     .print(&quot;What's your username? &quot;)
-    .chain(_ =&gt; Console.readLine)
+    .chain { _ =&gt; Console.readLine }
     .transformOutput { username =&gt; s&quot;Hello, $username!&quot; }
     .chain { greeting =&gt; Console.print(greeting) }</code></pre>
 <p>Note that in <code>promptAndGreet</code> we’ve replaced <code>print.andThen(readLine)</code> with <code>print.chain(_ =&gt; readLine)</code>, i.e. a special case of <code>chain</code> where the shape of the next program doesn’t depend on the output of the previous one, and can ignore it.</p>
@@ -362,7 +364,7 @@ val echo: Console[Unit] =
 <pre class="scala"><code>val namePrompt: Console[String] =
   Console
     .print(&quot;What's your username? &quot;)
-    .chain(_ =&gt; Console.readLine)
+    .chain { _ =&gt; Console.readLine }
 
 val promptAndGreet: Console[Unit] =
   namePrompt
@@ -445,7 +447,7 @@ object Console {
 val namePrompt: Console[String] =
   Console
     .print(&quot;What's your username? &quot;)
-    .chain(_ =&gt; Console.readLine)
+    .chain { _ =&gt; Console.readLine }
 
 val promptAndGreet: Console[Unit] =
   repeatOnEmpty(namePrompt)
@@ -507,7 +509,7 @@ object Console {
     case Console.Print(s) =&gt; IO.println(s)
     case Console.EmitOutput(a) =&gt; IO.pure(a)
     case Console.Chain(fa, f) =&gt;
-      translateToIO(fa).flatMap(x =&gt; translateToIO(f(x)))
+      translateToIO(fa).flatMap { x =&gt; translateToIO(f(x)) }
   }
 }</code></pre>
 <p>As you can see, we really do mean programs are <em>values</em>: <code>Console</code> is literally a datatype, which then gets translated to <code>IO</code>, which is another datatype. All the execution happens in the layer that interprets <code>IO</code> into actual side effects when the JVM calls <code>main</code>, as we will see once our series gets to discussing <code>IO</code>.</p>

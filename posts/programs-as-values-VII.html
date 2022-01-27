@@ -1,0 +1,507 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <!-- Microsoft Internet Explorer documentMode compatMode setting IE Modus -->
+    <script type="text/javascript">
+        var IE = null;
+        if (window.navigator.appName == "Microsoft Internet Explorer") {
+            if (document.documentMode) {
+
+                IE = document.documentMode;
+            } else {
+
+                IE = 5;
+                if (document.compatMode) {
+                    if (document.compatMode == "CSS1Compat")
+                        IE = 11;
+                }
+            }
+        }
+    </script>
+
+    <meta charset="utf-8">
+    <!-- X-UA -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <link rel="author" title="Fabio Labella" href="SystemFw" />
+
+
+
+    <meta name="google" content="notranslate" />
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- index ROBOTS follow -->
+    <meta name="robots" content="index, follow" />
+    <!-- Site Desciption -->
+    
+    <meta name="description" content="SystemFw FP blog">
+    
+
+    <meta name="keywords" content="Fabio Labella, SystemFw, Functional Programming, Haskell, Scala">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="../static/img/avatar.jpg" type="image/jpeg-icon" />
+
+    <!-- Blog Title -->
+    
+    <title>Programs as Values, Part VII: Exploring Chaining</title>
+    
+
+    <!-- Property Metas -->
+    <meta property="og:image" content="static/img/ix.png" />
+    
+    <meta property="og:title" content="SystemFw FP blog" />
+    <meta property="og:site_name" content="SystemFw FP blog" />
+    
+
+    <!-- Canonical -->
+    <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">
+
+    <!-- StyleSheet -->
+    <link rel="stylesheet" href="../static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/spaceg.stylesheets.css">
+    <link rel="stylesheet" href="../static/css/syntax.css">
+
+    <!-- Syntax highlighting -->
+    
+    <link rel="stylesheet" href="../static/highlight/styles/zenburn.css">
+    <script src="../static/highlight/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic,900,900italic" rel="stylesheet" type="text/css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Playfair+Display:400,700,900,400italic,700italic,900italic" rel="stylesheet" type="text/css">
+    <!-- -->
+
+    <style>
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fff;
+            /* change if the mask should have another color then white */
+            z-index: 99;
+            /* makes sure it stays on top */
+        }
+
+        #status {
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            left: 50%;
+            /* centers the loading animation horizontally one the screen */
+            top: 50%;
+            /* centers the loading animation vertically one the screen */
+            background-image: url("/static/img/preloader.gif");
+            /* path to your loading animation */
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: -100px 0 0 -100px;
+            /* is width and height divided by two */
+        }
+
+        ul,
+        ol {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .navbar-inverse {
+            background-color: #FFF;
+            border-color: #FFFFFF;
+        }
+    </style>
+    <style>
+        header.intro-header {
+            background: #6f5499;
+            background: no-repeat center center;
+            background-attachment: scroll;
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            background-size: cover;
+            -o-background-size: cover;
+        }
+
+        /* Preloader */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fff;
+            /* change if the mask should have another color then white */
+            z-index: 99;
+            /* makes sure it stays on top */
+        }
+
+        #status {
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            left: 50%;
+            /* centers the loading animation horizontally one the screen */
+            top: 50%;
+            /* centers the loading animation vertically one the screen */
+            background-image: ;
+            /* path to your loading animation */
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: -100px 0 0 -100px;
+            /* is width and height divided by two */
+        }
+
+        li {
+            list-style: none;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+            padding-right: 0px;
+        }
+
+        article li {
+            list-style: inherit;
+        }
+
+        article .figure {
+            text-align: center
+        }
+    </style>
+    <!-- end Loading front stylesheet here -->
+</head>
+
+
+<body>
+    <div id="preloader">
+        <div id="status">
+
+        </div>
+
+    </div>
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="\" id="blog-title-left-top">SystemFw</a>
+        </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="../about.html" target="_blank">About</a></li>
+            <li><a href="../archive.html">Posts</a></li>
+            <li><a href="../writings.html">Writings</a></li>
+            <li><a href="../talks.html">Talks</a></li>
+            <li><a href="https://www.github.com/SystemFw" id="roundbutton" target="_blank"><i class="fa fa-github"></i>Projects</a></li>
+          </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+
+    <div id="content">
+        <header class="title-header" alt title>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Programs as Values, Part VII: Exploring Chaining</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Page Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <p>Last time we introduced the key concept of <em>chaining</em>: creating programs that can depend on the output of other programs, and can therefore encode arbitrary sequential control flow. In this shorter follow-up we will explore some of the properties of chaining that are relevant when writing real code.</p>
+<h2 id="a-rose-by-any-other-name">A rose by any other name</h2>
+<p>Our main focus has been on three functions: <code>emitOutput</code>, <code>transformOutput</code>, and <code>chain</code>. Perhaps unsurprisingly given some of the <code>IO</code> snippets I’ve shown during these series, we can now reveal those aren’t the real names used in <a href="github.com/typelevel/cats">cats</a> and <a href="github.com/typelevel/cats-effect">cats-effect</a>. Enter <code>pure</code>, <code>map</code>, and <code>flatMap</code>:</p>
+<pre class="scala"><code>emitOutput[A]: A =&gt; Console[A]
+      pure[A]: A =&gt; Console[A]</code></pre>
+<pre class="scala"><code>transformOutput[A, B]: (Console[A], A =&gt; B) =&gt; Console[B]
+            map[A, B]: (Console[A], A =&gt; B) =&gt; Console[B]</code></pre>
+<pre class="scala"><code>  chain[A, B]: (Console[A], A =&gt; Console[B]) =&gt; Console[B]
+flatMap[A, B]: (Console[A], A =&gt; Console[B]) =&gt; Console[B]</code></pre>
+<p>The rationale behind these names is not that important, what matters is their type and the intent of the programs they return: emitting an output (<code>pure</code>), transforming the output of another program (<code>map</code>), and using the output of a program to determine what the next program should be (<code>flatMap</code>).</p>
+<p>Here’s <code>Console</code> with the standard names in place:</p>
+<pre class="scala"><code>/*
+ * carrier:
+ *   Console[A]
+ *     where A represents the output of a Console program
+ * introduction forms:
+ *   readLine: Console[String]
+ *   print: String =&gt; Console[Unit]
+ *   pure[A]: A =&gt; Console[A]
+ * combinators:
+ *   flatMap[A, B]: (Console[A], A =&gt; Console[B]) =&gt; Console[B]
+ *   map[A, B]: (Console[A], A =&gt; B) =&gt; Console[B]
+ * elimination forms:
+ *   run[A]: Console[A] =&gt; IO[A]
+ */
+ sealed trait Console[A] {
+   def flatMap[B](next: A =&gt; Console[B]): Console[B]
+   def map[B](transform: A =&gt; B): Console[B]
+
+   def run: IO[A]
+   ...
+ object Console {
+   val readLine: Console[String]
+   def print(s: String): Console[Unit]
+   def pure[A](out: A): Console[A]
+   ...</code></pre>
+<p>and here’s our sample program that greets any user that has a non-empty username:</p>
+<pre class="scala"><code>def repeatOnEmpty(p: Console[String]): Console[String] =
+  p.flatMap { str =&gt;
+    if (str.isEmpty) repeatOnEmpty(p)
+    else Console.pure(str)
+  }
+
+val namePrompt: Console[String] =
+  Console
+    .print(&quot;What's your username? &quot;)
+    .flatMap { _ =&gt; Console.readLine }
+
+val promptAndGreet: Console[Unit] =
+  repeatOnEmpty(namePrompt)
+    .map { username =&gt; s&quot;Hello, $username!&quot; }
+    .flatMap { greeting =&gt; Console.print(greeting) }</code></pre>
+<p>For the rest of the series we will use the same names <code>cats</code> uses, so that knowledge can be transferred immediately.</p>
+<h2 id="map-vs-flatmap">map vs flatMap</h2>
+<p>You might have noticed that there is some similarity between the types of <code>map</code> and <code>flatMap</code>:</p>
+<pre class="scala"><code>// map[A, B]:     (Console[A], A =&gt;         B ) =&gt; Console[B]
+// flatMap[A, B]: (Console[A], A =&gt; Console[B]) =&gt; Console[B]
+
+trait Console[A] {
+  def map[B](transform: A =&gt; B): Console[B]
+  def flatMap[B](next: A =&gt; Console[B]): Console[B]
+  ...</code></pre>
+<p>They both take functions that process the output of a previous computation, but <code>flatMap</code> uses it to determine the next computation as per the shape <code>A =&gt; Console[B]</code>, whereas <code>map</code> just transforms it into another value as per the shape <code>A =&gt; B</code>.</p>
+<p>Well, but we said that programs are values, so can we not pass a function that returns a program to <code>map</code>? Let’s see what happens by experimenting with a very simple <code>echo</code> program that reads a line and prints it back, then terminates:</p>
+<pre class="scala"><code>val echo: Console[Unit] =
+  Console
+    .readLine
+    .flatMap { line =&gt; Console.print(line) }</code></pre>
+<p>and let’s replace <code>flatMap</code> with <code>map</code>:</p>
+<pre class="scala"><code>val echo2: Console[Console[Unit]] =
+  Console
+    .readLine
+    .map { line =&gt; Console.print(line) }</code></pre>
+<p><code>Console.readLine.map[B]</code> expects a <code>String =&gt; B</code> and returns a <code>Console[B]</code>, and we’re passing a <code>String =&gt; Console[Unit]</code> to it, which means that <code>B = Console[Unit]</code>, and that the result will have type <code>Console[Console[Unit]]</code>. However when <code>echo2</code> runs (via <code>run</code> and <code>IOApp</code>) it will read a line from stdin, and then terminate <em>without</em> printing anything to stdout.</p>
+<p>This behaviour happens because <code>Console[Console[Unit]]</code> is not a chained program, but a program that returns another program <em>as an output</em>. The fact that this output also happens to be of type <code>Console</code> doesn’t change anything, <code>.map</code> treats it like any other output.</p>
+<p>Therefore we need to chain explicitly via <code>flatMap</code> for it to run:</p>
+<pre class="scala"><code>val echo2: Console[Console[Unit]] =
+  Console
+    .readLine
+    .map { line =&gt; Console.print(line) }
+
+val echo: Console[Unit] =
+  echo2.flatMap { nextProgram =&gt; nextProgram }</code></pre>
+<p>Similarly, the following program will only print “world!”, because the first <code>Console.print</code> is also not chained via <code>flatMap(_ =&gt; )</code>:</p>
+<pre class="scala"><code>val prog: Console[Unit] = {
+  Console.print(&quot;Hello &quot;)
+  Console.print(&quot;world!&quot;)
+}</code></pre>
+<p>In practice, using <code>map</code> instead of <code>flatMap</code> or skipping <code>flatMap</code> altogether are common sources of errors, look out for them whenever your programs aren’t executing something you think they should execute.</p>
+<h2 id="laws">Laws</h2>
+<p>Most material about laws is either of theoretical nature, or it talks about laws as contracts to respect when implementing algebras, but there’s very little talk about them from the <em>user</em>’s perspective. I want to share a practical view of laws as <em>refactoring rules</em> , where the equivalence symbol <code>p1 &lt;-&gt; p2</code> can be read as <code>p1 can be refactored into p2 and vice versa</code>.</p>
+<p>We’ve already seen a couple when discussing transforming outputs:</p>
+<pre class="scala"><code>// 1. Transforming with a no-op is the same as not transforming
+p.map { x =&gt; x } &lt;-&gt; p
+// 2. We can fuse two transformations into one
+p.map(f).map(g) &lt;-&gt; p.map(f.andThen(g))
+
+// Refactoring example for 1. and 2.
+Console
+  .readLine
+  .map { input =&gt; input.toUppercase }
+  .map { str =&gt; str.length }
+  .map { result =&gt; result }
+         &lt;-&gt;
+Console.readLine.map { input =&gt; input.toUppercase.length }</code></pre>
+<p>And we’ll follow a similar format for the additional laws of chaining: providing a description in English, an equivalence with <code>&lt;-&gt;</code>, and an example of refactoring.</p>
+<p>The first set of laws are variations of the same idea: if your chaining revolves exclusively around emitting an output, you don’t actually need to chain.</p>
+<pre class="scala"><code>// 3. Chaining to emit a transformed result is the same as transforming
+p.flatMap { x =&gt; pure(f(x)) } &lt;-&gt; p.map { x =&gt; f(x) }
+// 4. Chaining only to emit is a no-op. Follows from 3. and 1.
+p.flatMap { x =&gt; pure(x) } &lt;-&gt; p
+// 5. Emitting before chaining with a function is just a call to the function
+pure(a).flatMap { x =&gt; f(x) } &lt;-&gt; f(a)
+
+// Refactoring example for 3.
+Console
+  .readLine
+  .flatMap { line =&gt; Console.pure(line.length) }
+         &lt;-&gt;
+Console
+  .readLine
+  .map { line =&gt; line.length }
+
+// Refactoring example for 4.
+Console.readLine.flatMap { line =&gt; Console.pure(line) }
+         &lt;-&gt;
+Console.readLine
+
+// Refactoring example for 5.
+Console
+  .pure(&quot;hello&quot;)
+  .flatMap { word =&gt; Console.print(word) }
+         &lt;-&gt;
+Console.print(&quot;hello&quot;)</code></pre>
+<p>The final law deals with nesting:</p>
+<pre class="scala"><code>// 6. Sequences of dependencies can be nested or unnested
+p.flatMap { x =&gt;
+  f(x).flatMap { y =&gt;
+    g(y)
+  }
+}
+         &lt;-&gt;
+p
+ .flatMap { x =&gt; f(x) }
+ .flatMap { y =&gt; g(y) }
+
+// Refactoring example for 6.
+def prompt(s: String): Console[String] =
+  Console.print(s).flatMap { _ =&gt; Console.readLine }
+
+prompt(&quot;What's your name?&quot;).flatMap { name =&gt;
+  prompt(s&quot;Hello $name, what's your favourite food?&quot;).flatMap { food =&gt;
+    prompt(s&quot;I like $food too! And where are you from?&quot;)
+  }
+}
+         &lt;-&gt;
+prompt(&quot;What's your name?&quot;)
+  .flatMap { name =&gt; prompt(s&quot;Hello $name, what's your favourite food?&quot;) }
+  .flatMap { food =&gt; prompt(s&quot;I like $food too! And where are you from?&quot;) }</code></pre>
+<p>It can appear a bit puzzling, but it’s just stating “nothing weird happens when you nest programs”, since it’s the exact equivalent of the following behaviour that we take for granted in execution as evaluation:</p>
+<pre class="scala"><code>def prompt(s: String): String = {
+  println(s)
+  scala.io.StdIn.readLine()
+}
+
+val name: String = prompt(&quot;What's your name&quot;)
+val location: String = {
+  val food: String = prompt(s&quot;Hello $name, what's your favourite food?&quot;)
+  prompt(s&quot;I like $food too! And where are you from?&quot;)
+}
+         &lt;-&gt;
+val name: String = prompt(&quot;What's your name?&quot;)
+val food: String = prompt(s&quot;Hello $name, what's your favourite food?&quot;)
+val location: String = prompt(s&quot;I like $food too! And where are you from?&quot;)</code></pre>
+<p>Let’s conclude with an example of using laws to refactor one of our greeting programs:</p>
+<pre class="scala"><code>Console
+  .readLine
+  .map { username =&gt; s&quot;Hello, $username!&quot; }
+  .flatMap { greeting =&gt; Console.print(greeting) }
+// law 3: transform `map` into `flatMap`
+Console
+  .readLine
+  .flatMap { username =&gt; Console.pure(s&quot;Hello, $username!&quot;) }
+  .flatMap { greeting =&gt; Console.print(greeting) }
+// law 6: nest
+Console
+  .readLine
+  .flatMap { username =&gt;
+     Console.pure(s&quot;Hello, $username!&quot;)
+       .flatMap { greeting =&gt; Console.print(greeting) }
+   }
+// law 5: eliminate `pure` by applying function directly
+Console
+  .readLine
+  .flatMap { username =&gt; Console.print(s&quot;Hello, $username!&quot;) }</code></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>In this post we introduced the real names of <code>pure</code>, <code>map</code> and <code>flatMap</code> and shown how programs don’t execute without <code>flatMap</code>, before exploring the refactoring rules of chaining. Next time we’ll be looking at enriching our algebras by equipping them with <em>error handling</em>.</p>
+                <hr>
+            </div>
+        </div>
+    </div>
+</article>
+
+    </div>
+    <div id="footer">
+    </div>
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="feed.xml" data-datatype="json" data-type="GET" data-target="#frame" class="reload" id="clickme">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://github.com/SystemFw" target="_blank">
+                            <span class="fa-stack fa-lg">
+
+                                <i class="fa fa-arrow-circle-o-down"></i>
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a href="https://linkedin.com/in/fabiolabella" target="_blank">
+                            <span class="fa-stack fa-lg">
+
+                                <i class="fa fa-arrow-circle-o-down"></i>
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Fabio Labella 2019. <br><br>
+                </p>
+                <div class="col-md-12">
+                  <p class="copyright text-muted">
+                    Site generated by
+                    <a href="http://jaspervdj.be/hakyll" target="_blank">Hakyll</a>.
+                    Theme designed by
+                    <a href="https://github.com/katychuang" target="_blank">Katy Chuang</a>
+                    and can be found
+                    <a href="http://katychuang.com/hakyll-cssgarden/gallery/" target="_blank">here.</a>
+                  </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="../static/js/jquery.min.js"></script>
+<script src="../static/js/spaceg.stylesheets.min.js"></script>
+<script src="../static/js/bootstrap.min.js"></script>
+<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+<script src="../static/js/scripts.js"></script>
+
+</body>
+
+</html>
