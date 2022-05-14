@@ -233,43 +233,94 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <p>A large part of programming in many domains is dominated by <em>computational effects</em> such as concurrent state or I/O, yet one often hears that functional programming is about limiting or eliminating them. As it turns out though, programs as values has a lot to say about effects, and the common refrain of “having a non-effectful core with effects at the edges” is not a constraint of the paradigm, but merely architectural advice, and like all advice it is sometimes useful, and sometimes harmful. In fact, I like programs as values <em>because</em> I have to deal with effects, not in spite of it, and they will be the focus of this series.</p>
+                <p>A large part of programming in many domains is dominated by
+<em>computational effects</em> such as concurrent state or I/O, yet one
+often hears that functional programming is about limiting or
+eliminating them. As it turns out though, programs as values has a lot
+to say about effects, and the common refrain of “having a
+non-effectful core with effects at the edges” is not a constraint of
+the paradigm, but merely architectural advice, and like all advice it
+is sometimes useful, and sometimes harmful. In fact, I like programs
+as values <em>because</em> I have to deal with effects, not in spite of it,
+and they will be the focus of this series.</p>
 <p>Effectful code introduces a few fundamental problems:</p>
 <ul>
 <li>Controlling when an effect happens.</li>
 <li>Changing the meaning of an effect based on contest (e.g. in a test).</li>
 <li>Mixing different effects.</li>
 </ul>
-<p>A lot has been written about the last two points, but here I want to focus on the first, and introduce the notion of <strong>doing</strong> vs <strong>being</strong>.</p>
+<p>A lot has been written about the last two points, but here I want to
+focus on the first, and introduce the notion of <strong>doing</strong> vs
+<strong>being</strong>.</p>
 <h2 id="doing-being">Doing &amp; Being</h2>
 <p>Let’s look at these two snippets.</p>
 <pre class="scala"><code>&quot;hello&quot;.append(readLine)</code></pre>
 <pre class="scala"><code>repeatAction(times = 3, readLine)</code></pre>
-<p>The exact definition of <code>append</code> and <code>repeatAction</code> does not matter too much, pay attention to the use of <code>readLine</code> instead, which is very different:</p>
+<p>The exact definition of <code>append</code> and <code>repeatAction</code> does not matter
+too much, pay attention to the use of <code>readLine</code> instead, which is
+very different:</p>
 <ul>
-<li>In the first snippet, we want to <em>execute</em> <code>readLine</code> and pass its <em>result</em> to <code>append</code>.</li>
-<li>In the second snippet, we don’t want to pass <code>readLine</code>’s result to <code>repeatAction</code>, but <code>readLine</code> <em>itself</em>, without executing it. <code>repeatAction</code> can then use it internally as it pleases (in this case by executing it 3 times).</li>
+<li>In the first snippet, we want to <em>execute</em> <code>readLine</code> and pass its
+<em>result</em> to <code>append</code>.</li>
+<li>In the second snippet, we don’t want to pass <code>readLine</code>’s result to
+<code>repeatAction</code>, but <code>readLine</code> <em>itself</em>, without executing it.
+<code>repeatAction</code> can then use it internally as it pleases (in this
+case by executing it 3 times).</li>
 </ul>
-<p>I’ll call these two modes of use <code>doing</code> and <code>being</code> respectively. <code>doing</code> is in a sense the essence of effectful computation, i.e. executing actions and using their results in subsequent actions. <code>being</code> instead describes passing things to functions, giving them names, returning them as results, or putting them in data structures. In other words, it describes <em>values</em>.</p>
-<p>Generally we tend to associate <code>being</code> with non-effectful things like <code>5</code> or <code>&quot;hello&quot;</code>, but applying this principle to effectful actions enables <strong>compositional APIs</strong> : <code>repeatAction</code> is only possible when we use <code>readLine</code> in the <code>being</code> mode.</p>
-<p>We can then compare paradigms for effectful computation in terms of how they approach <code>doing</code> vs <code>being</code>, but before doing that, let’s define a bit more precisely what it means for something to be a <em>value</em>.</p>
+<p>I’ll call these two modes of use <code>doing</code> and <code>being</code> respectively.
+<code>doing</code> is in a sense the essence of effectful computation, i.e.
+executing actions and using their results in subsequent actions.
+<code>being</code> instead describes passing things to functions, giving them
+names, returning them as results, or putting them in data structures.
+In other words, it describes <em>values</em>.</p>
+<p>Generally we tend to associate <code>being</code> with non-effectful things like
+<code>5</code> or <code>"hello"</code>, but applying this principle to effectful actions
+enables <strong>compositional APIs</strong> : <code>repeatAction</code> is only possible when
+we use <code>readLine</code> in the <code>being</code> mode.</p>
+<p>We can then compare paradigms for effectful computation in terms of
+how they approach <code>doing</code> vs <code>being</code>, but before doing that, let’s
+define a bit more precisely what it means for something to be a
+<em>value</em>.</p>
 <h2 id="referential-transparency">Referential transparency</h2>
 <p>Let’s say we want to evaluate this simple mathematical expression</p>
 <pre><code>(x + 3) + (x * 2)  where x = 2</code></pre>
 <p>what we do is replace <code>2</code> wherever we see <code>x</code>, yielding</p>
 <pre><code>(2 + 3) + (2 * 2)</code></pre>
 <p>to which we then apply reduction rules to get to <code>9</code>.</p>
-<p>This process is called the <strong>substitution model of evaluation</strong>, since it’s centred around the concept of <em>substitution</em>: replacing names with the expression they refer to. We typically don’t think about programs this way though, using instead a state machine model where we go line by line and update the relevant state, as shown in this snippet:</p>
+<p>This process is called the <strong>substitution model of evaluation</strong>, since
+it’s centred around the concept of <em>substitution</em>: replacing names
+with the expression they refer to. We typically don’t think about
+programs this way though, using instead a state machine model where
+we go line by line and update the relevant state, as shown in this
+snippet:</p>
 <pre class="scala"><code>val x : String = &quot;Hello&quot;.reverse // x is &quot;olleh&quot;
 val y : String = x ++ x // y is &quot;olleHolleH&quot;
 // final result is &quot;olleHolleH&quot;</code></pre>
-<p>However, we can try using the substitution model instead (by replacing <code>x</code> with <code>&quot;Hello&quot;.reverse</code> everywhere), and nothing changes:</p>
+<p>However, we can try using the substitution model instead (by replacing
+<code>x</code> with <code>"Hello".reverse</code> everywhere), and nothing changes:</p>
 <pre class="scala"><code>val y : String = &quot;Hello&quot;.reverse ++ &quot;Hello&quot;.reverse
 // final result is &quot;olleHolleH&quot;</code></pre>
-<p>This property is called <strong>referential transparency</strong>: <em>replacing an expression with its bound value does not alter the observable behaviour of the program</em>. In other words, an expression is referentially transparent if it respects the subtitution model of evaluation. We are going to call such expressions <strong>values</strong>.</p>
-<p>Referential transparency (RT from now on) captures the essence of being a value, which is the fact that values require only <em>local</em> reasoning: no matter where a value is used, it is entirely characterised by its definition, as evidenced by the fact that you can entirely replace it with such definition without altering the behaviour of the program.</p>
-<p>On a practical level, RT gives us a <em>systematic</em> way to understand code: just replace names with definitions until you are at a sufficient level of detail. In the other direction, it also lets us <em>forget</em> about the details of a given piece of code: just give that piece a name, and use that name everywhere without fear of breaking anything. Inlining and name abstraction are always valid with RT code, and they are useful refactoring tools, in addition to being highly compositional.</p>
-<p>Let’s now give a couple of examples where RT does not hold, starting by evaluating this snippet in the state machine model:</p>
+<p>This property is called <strong>referential transparency</strong>: <em>replacing an
+expression with its bound value does not alter the observable
+behaviour of the program</em>. In other words, an expression is
+referentially transparent if it respects the subtitution model of
+evaluation. We are going to call such expressions <strong>values</strong>.</p>
+<p>Referential transparency (RT from now on) captures the essence of
+being a value, which is the fact that values require only <em>local</em>
+reasoning: no matter where a value is used, it is entirely
+characterised by its definition, as evidenced by the fact that you can
+entirely replace it with such definition without altering the
+behaviour of the program.</p>
+<p>On a practical level, RT gives us a <em>systematic</em> way to understand
+code: just replace names with definitions until you are at a
+sufficient level of detail. In the other direction, it also lets us
+<em>forget</em> about the details of a given piece of code: just give that
+piece a name, and use that name everywhere without fear of breaking
+anything. Inlining and name abstraction are always valid with RT
+code, and they are useful refactoring tools, in addition to being
+highly compositional.</p>
+<p>Let’s now give a couple of examples where RT does not hold, starting
+by evaluating this snippet in the state machine model:</p>
 <pre class="scala"><code>// `it` is an iterator over the sequence 1,2,3...
 val a = it.next // a is 1
 val b = a + 1   // b is 2
@@ -295,25 +346,46 @@ it.next + it.next + 1 // final result is 4</code></pre>
  3 // final result is 3
 }
 </code></pre>
-<p>now let’s apply the substitution model in reverse by giving a name to <code>println(&quot;hello&quot;)</code></p>
+<p>now let’s apply the substitution model in reverse by giving a name to
+<code>println("hello")</code></p>
 <pre class="scala"><code>val b = {
  val p = println(&quot;hello&quot;) // &quot;hello&quot; gets printed, () is returned
  p // () is returned
  p // () is returned
  3 // final result is 3
 }</code></pre>
-<p>Behaviour changes again! We say that <code>it.next</code> and <code>println(&quot;hello&quot;)</code> are RT breaking or, in other words, that they are not values.</p>
+<p>Behaviour changes again! We say that <code>it.next</code> and <code>println("hello")</code>
+are RT breaking or, in other words, that they are not values.</p>
 <blockquote>
 <p><strong>Note on terminology</strong></p>
-<p>In pure FP, RT breakages are typically called “side-effects”, which is an unfortunate source of ambiguity.</p>
-<p>When advocates of pure FP say they “program without side-effects”, they mean “without RT breakages”, but outsiders hear “without computational effects such as I/O”, which leaves them understandably confused.</p>
-<p>In this series we will always prefer “programs as values” to “pure FP”, and “RT breakage” to “side effect”.</p>
+<p>In pure FP, RT breakages are typically called “side-effects”, which
+is an unfortunate source of ambiguity.</p>
+<p>When advocates of pure FP say they
+“program without side-effects”, they mean “without RT breakages”, but
+outsiders hear “without computational effects such as I/O”, which
+leaves them understandably confused.</p>
+<p>In this series we will always
+prefer “programs as values” to “pure FP”, and “RT breakage” to “side
+effect”.</p>
 </blockquote>
 <h2 id="execution-as-evaluation">Execution as evaluation</h2>
-<p>We can now describe the effect model used by the vast majority of languages (Java, Go, JS, C++, Python etc), starting from their <em>evaluation strategy</em>, which I will informally define as the order in which expressions are reduced.</p>
-<p>These languages are based on <em>strict evaluation</em> (or <em>call by value</em>), in which expressions are evaluated as soon as they are bound to a name, and the arguments of a function are evaluated before the function is applied, which results in a natural sequential order.</p>
-<p>For this reason, these languages treat <em>execution as evaluation</em>: effects are executed during the process of evaluating the expression in which they are defined, and if we ever want to prevent execution, we need to <em>suspend evaluation</em>. Using the language we have developed earlier, we can say that execution as evaluation is <code>doing</code>-first, with explicit <code>being</code>.</p>
-<p>In Scala, the two aspects correspond to different language features, with <code>val</code> and by-value parameters (<code>: A</code>) used for <code>doing</code>, and <code>def</code> and by-name parameters (<code>: =&gt; A</code>) used for <code>being</code>.</p>
+<p>We can now describe the effect model used by the vast majority of
+languages (Java, Go, JS, C++, Python etc), starting from their
+<em>evaluation strategy</em>, which I will informally define as the order in
+which expressions are reduced.</p>
+<p>These languages are based on <em>strict evaluation</em> (or <em>call by value</em>),
+in which expressions are evaluated as soon as they are bound to a name,
+and the arguments of a function are evaluated before the function is
+applied, which results in a natural sequential order.</p>
+<p>For this reason, these languages treat <em>execution as evaluation</em>:
+effects are executed during the process of evaluating the expression
+in which they are defined, and if we ever want to prevent execution,
+we need to <em>suspend evaluation</em>. Using the language we have developed
+earlier, we can say that execution as evaluation is <code>doing</code>-first,
+with explicit <code>being</code>.</p>
+<p>In Scala, the two aspects correspond to different language features,
+with <code>val</code> and by-value parameters (<code>: A</code>) used for <code>doing</code>, and <code>def</code>
+and by-name parameters (<code>: =&gt; A</code>) used for <code>being</code>.</p>
 <pre class="scala"><code>// Examples of doing
 
 // by-value parameters
@@ -346,13 +418,33 @@ val readFirstTriplet = readThree
 
 // effects happen again, three more lines are read
 val readSecondTriplet = readThree</code></pre>
-<p>I’m going to postpone discussing the limitations of this approach in Scala until the Appendix, because we are finally ready to explore the core idea behind programs as values.</p>
+<p>I’m going to postpone discussing the limitations of this approach in
+Scala until the Appendix, because we are finally ready to explore the
+core idea behind programs as values.</p>
 <h2 id="programs-as-values">Programs as values</h2>
-<p>Programs as values goes in the exact opposite direction of execution as evaluation. Its key principle is: <code>being</code> first, with explicit <code>doing</code>.</p>
-<p>Because of this emphasis on <code>being</code>, programs written in this paradigm are composed entirely of values, i.e. referentially transparent expressions. And what’s the most straightforward kind of value? Well, just datatypes: effectful programs are represented simply as datatypes which describe the <em>intention</em> of executing a specific effect.</p>
-<p>When everything, including effectful programs, is a value, compositional <code>being</code> APIs become easy, just pass datatypes around, combine them with functions, put them in data structures, and so on, without worrying about when evaluation happens.</p>
-<p>But the question is, how do we represent <code>doing</code>? The idea is that instead of relying on evaluation, we design combinator functions that describe the intention of running a program after another, i.e. we represent <code>doing</code> explicitly through a <code>being</code> api.</p>
-<p>In the end, our whole program will be represented by a single expression, which builds an instance of our effect datatype. This instance can then be translated into actual computational effects, <em>once</em>, at the so called “end of the world”: in Scala this means the <code>main</code> function, whereas Haskell goes one step further by doing the translation in the runtime system, so that the programmer doesn’t even see it.</p>
+<p>Programs as values goes in the exact opposite direction of execution
+as evaluation. Its key principle is: <code>being</code> first, with explicit
+<code>doing</code>.</p>
+<p>Because of this emphasis on <code>being</code>, programs written in this paradigm
+are composed entirely of values, i.e. referentially transparent
+expressions. And what’s the most straightforward kind of value? Well,
+just datatypes: effectful programs are represented simply as datatypes
+which describe the <em>intention</em> of executing a specific effect.</p>
+<p>When everything, including effectful programs, is a value,
+compositional <code>being</code> APIs become easy, just pass datatypes
+around, combine them with functions, put them in data structures, and
+so on, without worrying about when evaluation happens.</p>
+<p>But the question is, how do we represent <code>doing</code>? The idea is that
+instead of relying on evaluation, we design combinator functions that
+describe the intention of running a program after another, i.e. we
+represent <code>doing</code> explicitly through a <code>being</code> api.</p>
+<p>In the end, our whole program will be represented by a single expression,
+which builds an instance of our effect datatype. This instance can
+then be translated into actual computational effects, <em>once</em>, at the
+so called “end of the world”: in Scala this means the <code>main</code>
+function, whereas Haskell goes one step further by doing the
+translation in the runtime system, so that the programmer doesn’t even
+see it.</p>
 <p>This snippet of pseudo code should give you an idea of how things look like in a programs as values codebase:</p>
 <pre class="scala"><code>// the type of our program
 type Console
@@ -378,20 +470,61 @@ object Main extends App {
   def main(args: List[String]): Unit =
     p.translateToActualEffects
 }</code></pre>
-<p>and believe it or not, that’s the whole idea: we represent effects as datatypes (i.e. <em>programs as values</em>), and we use functions to assemble big programs out of smaller ones. The rest comes down to discovering richer datatypes for our effects, and exploring the structure of the functions we use to combine them. And that is exactly what we are going to do next time.</p>
+<p>and believe it or not, that’s the whole idea: we represent effects as
+datatypes (i.e. <em>programs as values</em>), and we use functions to
+assemble big programs out of smaller ones. The rest comes down to
+discovering richer datatypes for our effects, and exploring the
+structure of the functions we use to combine them. And that is exactly
+what we are going to do next time.</p>
 <hr />
 <h2 id="appendix">Appendix</h2>
-<p>Although Scala goes further than most mainstream languages in its support for <code>being</code>, there are significant limitations in its approach.</p>
-<p>First of all, by-name parameters (<code>: =&gt; A</code>) don’t have their own type, which on one hand means that it’s not possible to use them as results, and on the other that mistakenly triggering evaluation too early and then passing the value will not trigger a type error.</p>
+<p>Although Scala goes further than most mainstream languages in its
+support for <code>being</code>, there are significant limitations in its
+approach.</p>
+<p>First of all, by-name parameters (<code>: =&gt; A</code>) don’t have their own type,
+which on one hand means that it’s not possible to use them as results,
+and on the other that mistakenly triggering evaluation too early and
+then passing the value will not trigger a type error.</p>
 <p>For example:</p>
 <pre class="scala"><code>val read = readLine
 repeatAction(3, read)</code></pre>
-<p>It’s impossible to completely prevent this problem, but a type error would go a long way in forcing you to think it through. In fact, having by-name parameters be completely transparent at call site is less than ideal: in a model where the execution of effects is tied to evaluation, knowing at a glance what’s evaluating when is very important, and Scala forces you to go to the definition site instead.</p>
-<p>You might be thinking that all these issues are easily solved by using <code>() =&gt; A</code> instead of <code>=&gt; A</code>, but this exposes another problem: tying the representation of <code>=&gt; A</code> to <code>() =&gt; A</code> is limited to synchronous execution. As a result, by-name params are mixed with abstractions that are inspired by programs as values, but are not RT, like <code>Future</code>. The resulting model is the worst of both worlds, since <em>some</em> effects are controlled by evaluation, and some by explicit combinators like <code>flatMap</code>: you lose both the immediacy of execution as evaluation, and the systematic clarity of programs as values.</p>
-<p>Finally, allowing effects in top level <code>val</code>s in the body of classes and objects sacrifices the property of having the whole program be a single expression, which has important consequences in the treatment of mutable state, see my talk <a href="https://systemfw.org/talks.html#scala-italy-2018">here</a>.</p>
-<p>However, it’s possible to imagine a model based on execution as evaluation that does not suffer from these problems. In particular, models based on <strong>effects and handlers</strong> (also known as algebraic effects) can not only overcome these issues, but also bring new things to the table, including more granular effect types, an elegant way to abstract over concrete effects, and the ability to write advanced control flow in user code (including async, exceptions, and nondeterminism).</p>
-<p>If you’re interested, check out the paper on <a href="http://homepages.inf.ed.ac.uk/slindley/papers/frankly-jfp.pdf">Frank</a>, which not only introduces an interesting language based on effects and handlers, but it’s also where the terms <code>doing</code> and <code>being</code> come from (although they aren’t analysed in depth there, hence why this post).</p>
-<p>The <a href="https://www.unisonweb.org">Unison</a> language is based on a similar model, and both languages might be the topic of future posts. For now though, we will deep dive into programs as values instead, see you next time!</p>
+<p>It’s impossible to completely prevent this problem, but a type error
+would go a long way in forcing you to think it through. In fact,
+having by-name parameters be completely transparent at call site is
+less than ideal: in a model where the execution of effects is tied to
+evaluation, knowing at a glance what’s evaluating when is very
+important, and Scala forces you to go to the definition site instead.</p>
+<p>You might be thinking that all these issues are easily solved by using
+<code>() =&gt; A</code> instead of <code>=&gt; A</code>, but this exposes another problem: tying
+the representation of <code>=&gt; A</code> to <code>() =&gt; A</code> is limited to synchronous
+execution. As a result, by-name params are mixed with abstractions
+that are inspired by programs as values, but are not RT, like <code>Future</code>.
+The resulting model is the worst of both worlds, since <em>some</em> effects
+are controlled by evaluation, and some by explicit combinators like
+<code>flatMap</code>: you lose both the immediacy of execution as evaluation, and
+the systematic clarity of programs as values.</p>
+<p>Finally, allowing effects in top level <code>val</code>s in the body of classes
+and objects sacrifices the property of having the whole program be a
+single expression, which has important consequences in the treatment
+of mutable state, see my talk
+<a href="https://systemfw.org/talks.html#scala-italy-2018">here</a>.</p>
+<p>However, it’s possible to imagine a model based on execution as
+evaluation that does not suffer from these problems. In particular,
+models based on <strong>effects and handlers</strong> (also known as algebraic
+effects) can not only overcome these issues, but also bring new things
+to the table, including more granular effect types, an elegant way to
+abstract over concrete effects, and the ability to write advanced
+control flow in user code (including async, exceptions, and
+nondeterminism).</p>
+<p>If you’re interested, check out the paper on
+<a href="http://homepages.inf.ed.ac.uk/slindley/papers/frankly-jfp.pdf">Frank</a>,
+which not only introduces an interesting language based on effects and
+handlers, but it’s also where the terms <code>doing</code> and <code>being</code> come from
+(although they aren’t analysed in depth there, hence why this post).</p>
+<p>The <a href="https://www.unisonweb.org">Unison</a> language is based on a similar
+model, and both languages might be the topic of future posts. For now
+though, we will deep dive into programs as values instead, see you
+next time!</p>
                 <hr>
             </div>
         </div>

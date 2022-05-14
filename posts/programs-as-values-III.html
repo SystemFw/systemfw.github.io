@@ -233,14 +233,25 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <p>At the end of <a href="https://systemfw.org/posts/programs-as-values-II.html">Part II</a>, we arrived at a description of the programs as values paradigm: we represent effects as datatypes (i.e. programs as values), and we use functions to assemble big programs out of smaller ones, until the last instruction in <code>main</code> translates them to actual side effects.</p>
-<p>Before diving more deeply in the structure of these datatypes, I’d like to expand on the two fundamental ideas:</p>
+                <p>At the end of <a href="https://systemfw.org/posts/programs-as-values-II.html">Part
+II</a>, we arrived
+at a description of the programs as values paradigm: we represent
+effects as datatypes (i.e. programs as values), and we use functions
+to assemble big programs out of smaller ones, until the last
+instruction in <code>main</code> translates them to actual side effects.</p>
+<p>Before diving more deeply in the structure of these datatypes, I’d
+like to expand on the two fundamental ideas:</p>
 <ul>
-<li>We can represent execution through explicit combinators. We will see how this is possible even in the execution as evaluation paradigm.</li>
-<li>Programs as values datatypes really do behave as values. We will show this with very simple examples based on <code>cats.effect.IO</code>.</li>
+<li>We can represent execution through explicit combinators. We will see
+how this is possible even in the execution as evaluation paradigm.</li>
+<li>Programs as values datatypes really do behave as values. We will
+show this with very simple examples based on <code>cats.effect.IO</code>.</li>
 </ul>
 <h2 id="making-execution-explicit">Making execution explicit</h2>
-<p>In this section we will look at how to express execution via explicit combinators. We don’t yet know how to do it in programs as values, so we are going to do it in execution as evaluation. In particular we are looking to express the following program:</p>
+<p>In this section we will look at how to express execution via explicit
+combinators. We don’t yet know how to do it in programs as values, so
+we are going to do it in execution as evaluation.
+In particular we are looking to express the following program:</p>
 <pre class="scala"><code>def p = {
   println(&quot;What's your name?&quot;)
   Thread.sleep(1000)
@@ -248,10 +259,23 @@
   println(s&quot;Hello, $yourName!&quot;)
   yourName.length
 }</code></pre>
-<p>This type of sequential control flow is very natural in execution as evaluation, but on deeper thought it relies on two “magical” features: one is that a newline/semicolon between two instructions <code>A</code> and <code>B</code> means “execute <code>A</code> before <code>B</code>”, and the other is that we can refer to the result of an instruction in subsequent instructions by binding it to a <code>val</code>.</p>
-<p>So here’s a challenge: in a strict language, is it possible to express <code>p</code> without relying on the two magical features I just described? Remember that by <em>strict</em> language we mean a language where the evaluation semantics are <code>call-by-value</code>, which means (informally) that the arguments of a function are evaluated left to right before the body of that function.</p>
-<p>Actually step away from the page and spend a few minutes thinking how we could do this.</p>
-<p>Did you manage? Nice!, but don’t worry if you didn’t: it’s counterintuitive at first, but we can get there by looking at <code>call-by-value</code> in more detail.</p>
+<p>This type of sequential control flow is very natural in
+execution as evaluation, but on deeper thought it relies on two
+“magical” features: one is that a newline/semicolon between two
+instructions <code>A</code> and <code>B</code> means “execute <code>A</code> before <code>B</code>”, and the other
+is that we can refer to the result of an instruction in subsequent
+instructions by binding it to a <code>val</code>.</p>
+<p>So here’s a challenge: in a strict language, is it possible to express
+<code>p</code> without relying on the two magical features I just described?
+Remember that by <em>strict</em> language we mean a language where the
+evaluation semantics are <code>call-by-value</code>, which means (informally)
+that the arguments of a function are evaluated left to right before
+the body of that function.</p>
+<p>Actually step away from the page and spend a few minutes thinking how
+we could do this.</p>
+<p>Did you manage? Nice!, but don’t worry if you didn’t: it’s
+counterintuitive at first, but we can get there by looking at
+<code>call-by-value</code> in more detail.</p>
 <p>Let’s take this example:</p>
 <pre class="scala"><code>def two = 2
 def three = 3
@@ -279,7 +303,9 @@ add(two, three)
 // Evaluating 3
 // Evaluating addition
 // res1: Int = 5</code></pre>
-<p>The execution trace closely resembles sequential control flow, which gives us an idea on how we can sequence two instructions by exploiting the evaluation order of the arguments of a function:</p>
+<p>The execution trace closely resembles sequential control flow, which
+gives us an idea on how we can sequence two instructions by exploiting
+the evaluation order of the arguments of a function:</p>
 <pre class="scala"><code>def seq1[A, B](fst: A, snd: B): Unit = ()
 
 seq1(
@@ -292,7 +318,10 @@ seq1(
 // first
 // second
 // third</code></pre>
-<p>But that’s not general enough: when using the normal newline/semicolon, the last expression becomes the overall result. So we can slightly modify our <code>seq1</code> to return the second argument instead:</p>
+<p>But that’s not general enough: when using the normal
+newline/semicolon, the last expression becomes the overall result. So
+we can slightly modify our <code>seq1</code> to return the second argument
+instead:</p>
 <pre class="scala"><code>def seq2[A, B](a: A, b: B): B = b
 
 seq2(
@@ -301,7 +330,9 @@ seq2(
 )
 // one
 // res3: Int = 42</code></pre>
-<p>We are getting there, but we still cannot express the second “magical” feature, the ability to refer to the result of an instruction in subsequent instructions. This program:</p>
+<p>We are getting there, but we still cannot express the second
+“magical” feature, the ability to refer to the result of an
+instruction in subsequent instructions. This program:</p>
 <pre class="scala"><code>val s = scala.io.StdIn.readLine()
 s.length + 1</code></pre>
 <p>would translate to:</p>
@@ -316,16 +347,21 @@ s.length + 1</code></pre>
 <pre class="scala"><code> val yourName = scala.io.StdIn.readLine()
  println(s&quot;Hello, $yourName!&quot;)
  yourName.length</code></pre>
-<p><code>val yourName</code> conceptually divides the program in two halves: the first half computes <code>yourName</code>, and the second half <em>depends</em> on it.</p>
-<p><code>seq2</code> cannot represent this idea because the two halves of the program are represented as <code>A</code> and <code>B</code>, and there is no relationship between them:</p>
+<p><code>val yourName</code> conceptually divides the program in two halves: the
+first half computes <code>yourName</code>, and the second half <em>depends</em> on it.</p>
+<p><code>seq2</code> cannot represent this idea because the two halves of the
+program are represented as <code>A</code> and <code>B</code>, and there is no relationship
+between them:</p>
 <pre class="scala"><code>def seq2[A, B](a: A, b: B): B = b</code></pre>
-<p>but that shows us the path to a solution, we need to express the idea that <code>B</code> <em>depends on</em> <code>A</code>, i.e. that <code>B</code> is a function of <code>A</code>:</p>
+<p>but that shows us the path to a solution, we need to express the idea
+that <code>B</code> <em>depends on</em> <code>A</code>, i.e. that <code>B</code> is a function of <code>A</code>:</p>
 <pre class="scala"><code>def seq3[A, B](a: A)(f: A =&gt; B): B = f(a)</code></pre>
 <p>and we can now write:</p>
 <pre class="scala"><code>seq3(scala.io.StdIn.readLine())(s =&gt; s.length + 1)</code></pre>
 <p><code>seq3</code> also works for the simple sequencing case, by ignoring its argument:</p>
 <pre class="scala"><code>seq3(println(&quot;hello&quot;))(_ =&gt; println(&quot;world&quot;))</code></pre>
-<p>which makes sense, normal semicolons can also be seen as a special case of named results, i.e.</p>
+<p>which makes sense, normal semicolons can also be seen as a special
+case of named results, i.e.</p>
 <pre class="scala"><code>println(&quot;hello&quot;)
 println(&quot;world&quot;)</code></pre>
 <p>can be seen as:</p>
@@ -352,7 +388,11 @@ def explicit =
       }
     }
   }</code></pre>
-<p>So, why did we do this? The implementation of <code>seq</code> still relies on evaluation, and the effectful building blocks like <code>println</code> aren’t represented as datatypes/values, but <code>explicit</code> shows that we can describe execution through combinators, and that <em>structure</em> can be applied to things which <em>are</em> values, like <code>cats.effect.IO</code>:</p>
+<p>So, why did we do this? The implementation of <code>seq</code> still relies on
+evaluation, and the effectful building blocks like <code>println</code> aren’t
+represented as datatypes/values, but <code>explicit</code> shows that we can
+describe execution through combinators, and that <em>structure</em> can be
+applied to things which <em>are</em> values, like <code>cats.effect.IO</code>:</p>
 <pre class="scala"><code>import cats.effect.IO
 import scala.concurrent.duration._
 
@@ -380,17 +420,25 @@ IO.readLine.flatMap { yourName =&gt;
   IO.println(s&quot;Hello, $yourName!&quot;).as(yourName.length)
 }</code></pre>
 <h2 id="io-is-a-value">IO is a value</h2>
-<p>In programs as values effects are represented as datatypes, and <code>IO</code> is the most fundamental datatype in the paradigm: an <code>IO[A]</code> represents a program that can perform arbitrary effects, and produce a result of type <code>A</code>.</p>
-<p>In the previous section I said that <code>cats.effect.IO</code> is a value, so what does this mean?</p>
+<p>In programs as values effects are represented as datatypes, and <code>IO</code>
+is the most fundamental datatype in the paradigm: an <code>IO[A]</code>
+represents a program that can perform arbitrary effects, and produce a
+result of type <code>A</code>.</p>
+<p>In the previous section I said that <code>cats.effect.IO</code> is a value, so
+what does this mean?</p>
 <p>Let’s take a look at this program:</p>
 <pre class="scala"><code>import cats.effect.IO
 
 val a: IO[Unit] = IO.println(&quot;hello&quot;)
 // a: IO[Unit] = IO(...)</code></pre>
-<p>As you can see, evaluating <code>a</code> doesn’t print anything, it literally just returns an instance of the <code>IO</code> datatype. In fact, it isn’t any different from:</p>
+<p>As you can see, evaluating <code>a</code> doesn’t print anything, it literally
+just returns an instance of the <code>IO</code> datatype. In fact, it isn’t any
+different from:</p>
 <pre class="scala"><code>val b: Int = 42
 // b: Int = 42</code></pre>
-<p><code>IO</code> gets translated into actual side-effects only in <code>main</code>, and cats-effect defines an <code>IOApp</code> trait as the entry point of your application:</p>
+<p><code>IO</code> gets translated into actual side-effects only in <code>main</code>, and
+cats-effect defines an <code>IOApp</code> trait as the entry point of your
+application:</p>
 <pre class="scala"><code>import cats.effect.IOApp
 
 object MyApp extends IOApp.Simple {
@@ -400,7 +448,8 @@ object MyApp extends IOApp.Simple {
 <pre class="scala"><code>MyApp.main(Array())
 
 // hello</code></pre>
-<p>Because <code>IO</code>s are values, relying on evaluation to sequence two <code>IO</code>s has no effect:</p>
+<p>Because <code>IO</code>s are values, relying on evaluation to sequence two <code>IO</code>s
+has no effect:</p>
 <pre class="scala"><code>val a: IO[Unit] = {
   IO.println(&quot;hey&quot;)
   IO.println(&quot;hello&quot;)
@@ -408,14 +457,17 @@ object MyApp extends IOApp.Simple {
 <pre class="scala"><code>MyApp.main(Array())
 
 // hello</code></pre>
-<p>Which is very surprising at first, but it’s equivalent to saying that the number <code>34</code> is discarded in:</p>
+<p>Which is very surprising at first, but it’s equivalent to saying that
+the number <code>34</code> is discarded in:</p>
 <pre class="scala"><code>val c = {
   34
   &quot;something&quot;
 }
 // c: String = &quot;something&quot;</code></pre>
-<p>Both <code>IO.println(&quot;hey&quot;)</code> and <code>34</code> are just values, and have no effect if you do nothing with them.</p>
-<p>Sequencing has to be explicit through combinators, just like we saw in the previous section:</p>
+<p>Both <code>IO.println("hey")</code> and <code>34</code> are just values, and have no effect
+if you do nothing with them.</p>
+<p>Sequencing has to be explicit through combinators, just like we saw in
+the previous section:</p>
 <pre class="scala"><code>val a: IO[Unit] =
   IO.println(&quot;hey&quot;).flatMap { _ =&gt;
     IO.println(&quot;hello&quot;)
@@ -427,7 +479,9 @@ object MyApp extends IOApp.Simple {
 
 // hey
 // hello</code></pre>
-<p>And above all, remember that values are <em>referentially transparent</em>, so the two programs below describe the same behaviour, which is to print twice:</p>
+<p>And above all, remember that values are <em>referentially transparent</em>,
+so the two programs below describe the same behaviour, which is to
+print twice:</p>
 <pre class="scala"><code>IO.println(&quot;hello&quot;) &gt;&gt; IO.println(&quot;hello&quot;)</code></pre>
 <pre class="scala"><code>val p = IO.println(&quot;hello&quot;)
 p &gt;&gt; p</code></pre>
@@ -435,10 +489,16 @@ p &gt;&gt; p</code></pre>
 <pre><code>2 + 2</code></pre>
 <pre><code>val x = 2
 x + x</code></pre>
-<p><em>You can always give a name to a value, and you can always replace a name with its value</em>.</p>
+<p><em>You can always give a name to a value, and you can always replace a
+name with its value</em>.</p>
 <h2 id="explicit-control-flow-with-values">Explicit control flow with values</h2>
-<p>In this post we saw that using datatypes to describe effects requires modelling execution with explicit combinators, and that we can readily emulate sequential flow with this approach.</p>
-<p>In most execution as evaluation languages, enriching control flow beyond that requires additional features, such as <code>try/catch</code>, <code>for</code> loops, or <code>async</code> functions, but those concepts can all be represented as combinators over values:</p>
+<p>In this post we saw that using datatypes to describe effects requires
+modelling execution with explicit combinators, and that we can readily
+emulate sequential flow with this approach.</p>
+<p>In most execution as evaluation languages, enriching control flow
+beyond that requires additional features, such as <code>try/catch</code>, <code>for</code>
+loops, or <code>async</code> functions, but those concepts can all be represented
+as combinators over values:</p>
 <pre class="scala"><code>ioA.handleErrorWith(ioB)
 listA.traverse(i =&gt; myIO(i))
 (ioA, ioB).parMapN(f)</code></pre>
@@ -459,7 +519,9 @@ Stream
 <p>as well as to other kinds of effectful programs, such as parsers:</p>
 <pre class="scala"><code>val listSep: Parser[Unit] =
   Parser.char(',').surroundedBy(whitespace.rep.void).void</code></pre>
-<p>Next time, we are going to start looking in detail at the structure of programs as values datatypes, by talking about <em>algebras</em>. See you then!</p>
+<p>Next time, we are going to start looking in detail at the structure of
+programs as values datatypes, by talking about <em>algebras</em>. See you
+then!</p>
                 <hr>
             </div>
         </div>

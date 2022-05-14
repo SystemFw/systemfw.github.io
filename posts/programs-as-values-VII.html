@@ -233,16 +233,29 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <p>Last time we introduced the key concept of <em>chaining</em>: creating programs that can depend on the output of other programs, and can therefore encode arbitrary sequential control flow. In this shorter follow-up we will explore some of the properties of chaining that are relevant when writing real code.</p>
+                <p>Last time we introduced the key concept of <em>chaining</em>: creating
+programs that can depend on the output of other programs, and can
+therefore encode arbitrary sequential control flow. In this shorter
+follow-up we will explore some of the properties of chaining that are
+relevant when writing real code.</p>
 <h2 id="a-rose-by-any-other-name">A rose by any other name</h2>
-<p>Our main focus has been on three functions: <code>emitOutput</code>, <code>transformOutput</code>, and <code>chain</code>. Perhaps unsurprisingly given some of the <code>IO</code> snippets I’ve shown during these series, we can now reveal those aren’t the real names used in <a href="github.com/typelevel/cats">cats</a> and <a href="github.com/typelevel/cats-effect">cats-effect</a>. Enter <code>pure</code>, <code>map</code>, and <code>flatMap</code>:</p>
+<p>Our main focus has been on three functions: <code>emitOutput</code>,
+<code>transformOutput</code>, and <code>chain</code>. Perhaps unsurprisingly given some of
+the <code>IO</code> snippets I’ve shown during these series, we can now reveal
+those aren’t the real names used in <a href="github.com/typelevel/cats">cats</a>
+and <a href="github.com/typelevel/cats-effect">cats-effect</a>. Enter <code>pure</code>,
+<code>map</code>, and <code>flatMap</code>:</p>
 <pre class="scala"><code>emitOutput[A]: A =&gt; Console[A]
       pure[A]: A =&gt; Console[A]</code></pre>
 <pre class="scala"><code>transformOutput[A, B]: (Console[A], A =&gt; B) =&gt; Console[B]
             map[A, B]: (Console[A], A =&gt; B) =&gt; Console[B]</code></pre>
 <pre class="scala"><code>  chain[A, B]: (Console[A], A =&gt; Console[B]) =&gt; Console[B]
 flatMap[A, B]: (Console[A], A =&gt; Console[B]) =&gt; Console[B]</code></pre>
-<p>The rationale behind these names is not that important, what matters is their type and the intent of the programs they return: emitting an output (<code>pure</code>), transforming the output of another program (<code>map</code>), and using the output of a program to determine what the next program should be (<code>flatMap</code>).</p>
+<p>The rationale behind these names is not that important, what matters
+is their type and the intent of the programs they return: emitting an
+output (<code>pure</code>), transforming the output of another program (<code>map</code>),
+and using the output of a program to determine what the next
+program should be (<code>flatMap</code>).</p>
 <p>Here’s <code>Console</code> with the standard names in place:</p>
 <pre class="scala"><code>/*
  * carrier:
@@ -269,7 +282,8 @@ flatMap[A, B]: (Console[A], A =&gt; Console[B]) =&gt; Console[B]</code></pre>
    def print(s: String): Console[Unit]
    def pure[A](out: A): Console[A]
    ...</code></pre>
-<p>and here’s our sample program that greets any user that has a non-empty username:</p>
+<p>and here’s our sample program that greets any user that has a non-empty
+username:</p>
 <pre class="scala"><code>def repeatOnEmpty(p: Console[String]): Console[String] =
   p.flatMap { str =&gt;
     if (str.isEmpty) repeatOnEmpty(p)
@@ -285,7 +299,8 @@ val promptAndGreet: Console[Unit] =
   repeatOnEmpty(namePrompt)
     .map { username =&gt; s&quot;Hello, $username!&quot; }
     .flatMap { greeting =&gt; Console.print(greeting) }</code></pre>
-<p>For the rest of the series we will use the same names <code>cats</code> uses, so that knowledge can be transferred immediately.</p>
+<p>For the rest of the series we will use the same names <code>cats</code> uses, so
+that knowledge can be transferred immediately.</p>
 <h2 id="map-vs-flatmap">map vs flatMap</h2>
 <p>You might have noticed that there is some similarity between the types of <code>map</code> and <code>flatMap</code>:</p>
 <pre class="scala"><code>// map[A, B]:     (Console[A], A =&gt;         B ) =&gt; Console[B]
@@ -295,8 +310,14 @@ trait Console[A] {
   def map[B](transform: A =&gt; B): Console[B]
   def flatMap[B](next: A =&gt; Console[B]): Console[B]
   ...</code></pre>
-<p>They both take functions that process the output of a previous computation, but <code>flatMap</code> uses it to determine the next computation as per the shape <code>A =&gt; Console[B]</code>, whereas <code>map</code> just transforms it into another value as per the shape <code>A =&gt; B</code>.</p>
-<p>Well, but we said that programs are values, so can we not pass a function that returns a program to <code>map</code>? Let’s see what happens by experimenting with a very simple <code>echo</code> program that reads a line and prints it back, then terminates:</p>
+<p>They both take functions that process the output of a
+previous computation, but <code>flatMap</code> uses it to determine the next
+computation as per the shape <code>A =&gt; Console[B]</code>, whereas <code>map</code> just
+transforms it into another value as per the shape <code>A =&gt; B</code>.</p>
+<p>Well, but we said that programs are values, so can we not pass a
+function that returns a program to <code>map</code>? Let’s see what happens by
+experimenting with a very simple <code>echo</code> program that reads a line and
+prints it back, then terminates:</p>
 <pre class="scala"><code>val echo: Console[Unit] =
   Console
     .readLine
@@ -306,8 +327,17 @@ trait Console[A] {
   Console
     .readLine
     .map { line =&gt; Console.print(line) }</code></pre>
-<p><code>Console.readLine.map[B]</code> expects a <code>String =&gt; B</code> and returns a <code>Console[B]</code>, and we’re passing a <code>String =&gt; Console[Unit]</code> to it, which means that <code>B = Console[Unit]</code>, and that the result will have type <code>Console[Console[Unit]]</code>. However when <code>echo2</code> runs (via <code>run</code> and <code>IOApp</code>) it will read a line from stdin, and then terminate <em>without</em> printing anything to stdout.</p>
-<p>This behaviour happens because <code>Console[Console[Unit]]</code> is not a chained program, but a program that returns another program <em>as an output</em>. The fact that this output also happens to be of type <code>Console</code> doesn’t change anything, <code>.map</code> treats it like any other output.</p>
+<p><code>Console.readLine.map[B]</code> expects a <code>String =&gt; B</code> and returns a
+<code>Console[B]</code>, and we’re passing a <code>String =&gt; Console[Unit]</code> to it,
+which means that <code>B = Console[Unit]</code>, and that the result will have
+type <code>Console[Console[Unit]]</code>. However when <code>echo2</code> runs (via <code>run</code>
+and <code>IOApp</code>) it will read a line from stdin, and then terminate
+<em>without</em> printing anything to stdout.</p>
+<p>This behaviour happens because <code>Console[Console[Unit]]</code> is not a
+chained program, but a program that returns another program <em>as an
+output</em>. The fact that this output also happens to be of type
+<code>Console</code> doesn’t change anything, <code>.map</code> treats it like any other
+output.</p>
 <p>Therefore we need to chain explicitly via <code>flatMap</code> for it to run:</p>
 <pre class="scala"><code>val echo2: Console[Console[Unit]] =
   Console
@@ -316,14 +346,22 @@ trait Console[A] {
 
 val echo: Console[Unit] =
   echo2.flatMap { nextProgram =&gt; nextProgram }</code></pre>
-<p>Similarly, the following program will only print “world!”, because the first <code>Console.print</code> is also not chained via <code>flatMap(_ =&gt; )</code>:</p>
+<p>Similarly, the following program will only print “world!”, because the
+first <code>Console.print</code> is also not chained via <code>flatMap(_ =&gt; )</code>:</p>
 <pre class="scala"><code>val prog: Console[Unit] = {
   Console.print(&quot;Hello &quot;)
   Console.print(&quot;world!&quot;)
 }</code></pre>
-<p>In practice, using <code>map</code> instead of <code>flatMap</code> or skipping <code>flatMap</code> altogether are common sources of errors, look out for them whenever your programs aren’t executing something you think they should execute.</p>
+<p>In practice, using <code>map</code> instead of <code>flatMap</code> or skipping <code>flatMap</code>
+altogether are common sources of errors, look out for them whenever
+your programs aren’t executing something you think they should
+execute.</p>
 <h2 id="laws">Laws</h2>
-<p>Most material about laws is either of theoretical nature, or it talks about laws as contracts to respect when implementing algebras, but there’s very little talk about them from the <em>user</em>’s perspective. I want to share a practical view of laws as <em>refactoring rules</em> , where the equivalence symbol <code>p1 &lt;-&gt; p2</code> can be read as <code>p1 can be refactored into p2 and vice versa</code>.</p>
+<p>Most material about laws is either of theoretical nature, or it talks
+about laws as contracts to respect when implementing algebras, but
+there’s very little talk about them from the <em>user</em>’s perspective.
+I want to share a practical view of laws as <em>refactoring rules</em> ,
+where the equivalence symbol <code>p1 &lt;-&gt; p2</code> can be read as <code>p1 can be refactored into p2 and vice versa</code>.</p>
 <p>We’ve already seen a couple when discussing transforming outputs:</p>
 <pre class="scala"><code>// 1. Transforming with a no-op is the same as not transforming
 p.map { x =&gt; x } &lt;-&gt; p
@@ -338,8 +376,12 @@ Console
   .map { result =&gt; result }
          &lt;-&gt;
 Console.readLine.map { input =&gt; input.toUppercase.length }</code></pre>
-<p>And we’ll follow a similar format for the additional laws of chaining: providing a description in English, an equivalence with <code>&lt;-&gt;</code>, and an example of refactoring.</p>
-<p>The first set of laws are variations of the same idea: if your chaining revolves exclusively around emitting an output, you don’t actually need to chain.</p>
+<p>And we’ll follow a similar format for the additional laws of chaining:
+providing a description in English, an equivalence with <code>&lt;-&gt;</code>, and an
+example of refactoring.</p>
+<p>The first set of laws are variations of the same idea: if your
+chaining revolves exclusively around emitting an output, you don’t
+actually need to chain.</p>
 <pre class="scala"><code>// 3. Chaining to emit a transformed result is the same as transforming
 p.flatMap { x =&gt; pure(f(x)) } &lt;-&gt; p.map { x =&gt; f(x) }
 // 4. Chaining only to emit is a no-op. Follows from 3. and 1.
@@ -392,7 +434,10 @@ prompt(&quot;What's your name?&quot;).flatMap { name =&gt;
 prompt(&quot;What's your name?&quot;)
   .flatMap { name =&gt; prompt(s&quot;Hello $name, what's your favourite food?&quot;) }
   .flatMap { food =&gt; prompt(s&quot;I like $food too! And where are you from?&quot;) }</code></pre>
-<p>It can appear a bit puzzling, but it’s just stating “nothing weird happens when you nest programs”, since it’s the exact equivalent of the following behaviour that we take for granted in execution as evaluation:</p>
+<p>It can appear a bit puzzling, but it’s just stating “nothing weird
+happens when you nest programs”, since it’s the exact equivalent of
+the following behaviour that we take for granted in execution as
+evaluation:</p>
 <pre class="scala"><code>def prompt(s: String): String = {
   println(s)
   scala.io.StdIn.readLine()
@@ -407,7 +452,8 @@ val food: String = {
   prompt(s&quot;Hello $name, what's your favourite food?&quot;)
 }
 prompt(s&quot;I like $food too! And where are you from?&quot;)</code></pre>
-<p>Let’s conclude with an example of using laws to refactor one of our greeting programs:</p>
+<p>Let’s conclude with an example of using laws to refactor one of our
+greeting programs:</p>
 <pre class="scala"><code>Console
   .readLine
   .map { username =&gt; s&quot;Hello, $username!&quot; }
@@ -429,7 +475,11 @@ Console
   .readLine
   .flatMap { username =&gt; Console.print(s&quot;Hello, $username!&quot;) }</code></pre>
 <h2 id="conclusion">Conclusion</h2>
-<p>In this post we introduced the real names of <code>pure</code>, <code>map</code> and <code>flatMap</code> and shown how programs don’t execute without <code>flatMap</code>, before exploring the refactoring rules of chaining. Next time we’ll be looking at enriching our algebras by equipping them with <em>error handling</em>.</p>
+<p>In this post we introduced the real names of <code>pure</code>, <code>map</code> and
+<code>flatMap</code> and shown how programs don’t execute without <code>flatMap</code>,
+before exploring the refactoring rules of chaining. Next time we’ll be
+looking at enriching our algebras by equipping them with <em>error
+handling</em>.</p>
                 <hr>
             </div>
         </div>

@@ -233,9 +233,11 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <p>We want to write an algebra that reads from stdin, and use it to write the following program:</p>
+                <p>We want to write an algebra that reads from stdin, and use it to write
+the following program:</p>
 <blockquote>
-<p>read a line from stdin, compute its length, and return <code>true</code> if the length is greater than 10, or <code>false</code> otherwise.</p>
+<p>read a line from stdin, compute its length, and return <code>true</code> if the length
+is greater than 10, or <code>false</code> otherwise.</p>
 </blockquote>
 <p>A starting point could be:</p>
 <pre class="scala"><code>/*
@@ -249,7 +251,9 @@ sealed trait In {
 object In {
   val readLine: In
   ...</code></pre>
-<p>but obviously that’s not enough to write our program: we have encoded the action of reading a line from stdin, but we still need to do some extra transformations on the line we’ve read.</p>
+<p>but obviously that’s not enough to write our program: we have encoded
+the action of reading a line from stdin, but we still need to do some
+extra transformations on the line we’ve read.</p>
 <p>So, your first instinct might be to add an elimination form:</p>
 <pre class="scala"><code>/*
  * carrier:
@@ -267,11 +271,27 @@ object In {
   ...</code></pre>
 <p>in order to write:</p>
 <pre class="scala"><code>val out: Boolean = readLine.nope.length &gt; 10</code></pre>
-<p>but this is not a fruitful direction: we are basically saying that the only way to change the output of a program written in the <code>In</code> algebra is to eliminate the algebra entirely.</p>
-<p>Algebras are our unit of composition, therefore with the elimination approach any program that needs to change its output can no longer be composed, which is a <em>really</em> strong limitation: for example in <a href="https://systemfw.org/posts/programs-as-values-III.html">Part III</a> we saw that for <code>IO</code> elimination happens when the JVM calls <code>main</code>, it would be really weird if we couldn’t encode something as simple as <code>String.length</code> until then.</p>
-<p>Instead, we want to have the ability to transform outputs without leaving our algebra, and therefore we have to enrich it with a <code>transformOutput</code> <em>combinator</em>. Recall that the general shape of a combinator is:</p>
+<p>but this is not a fruitful direction: we are basically saying that the
+only way to change the output of a program written in the <code>In</code> algebra
+is to eliminate the algebra entirely.</p>
+<p>Algebras are our unit of composition, therefore with the elimination
+approach any program that needs to change its output can no longer be
+composed, which is a <em>really</em> strong limitation: for example in <a href="https://systemfw.org/posts/programs-as-values-III.html">Part
+III</a> we saw
+that for <code>IO</code> elimination happens when the JVM calls <code>main</code>, it would
+be really weird if we couldn’t encode something as simple as
+<code>String.length</code> until then.</p>
+<p>Instead, we want to have the ability to transform outputs without
+leaving our algebra, and therefore we have to enrich it with a
+<code>transformOutput</code> <em>combinator</em>. Recall that the general shape of a
+combinator is:</p>
 <pre class="scala"><code>transformOutput: (In, ...) =&gt; In</code></pre>
-<p>and we need to fill the <code>...</code> with something that can encode the idea of transforming one thing into another, which we already have a well known concept for: functions. So, <code>transformOutput</code> needs to take a function, but we have a problem: what type should this function be, in order to fit the possible transformations we want to encode such as <code>_.length</code> or <code>_ &gt; 10</code> ?</p>
+<p>and we need to fill the <code>...</code> with something that can encode the
+idea of transforming one thing into another, which we already have
+a well known concept for: functions. So, <code>transformOutput</code> needs to take
+a function, but we have a problem: what type should this function be,
+in order to fit the possible transformations we want to encode such as
+<code>_.length</code> or <code>_ &gt; 10</code> ?</p>
 <p>Of course, an <code>Any =&gt; Any</code> fits anything:</p>
 <pre class="scala"><code>/*
  * carrier:
@@ -287,23 +307,46 @@ sealed trait In {
 object In {
   val readLine: In
   ...</code></pre>
-<p>but this is also not an acceptable solution: our algebra has gained power, but we have lost type safety altogether.</p>
-<p>As it turns out, the issue is with the carrier, specifically that these two programs have the same type:</p>
+<p>but this is also not an acceptable solution: our algebra has gained
+power, but we have lost type safety altogether.</p>
+<p>As it turns out, the issue is with the carrier, specifically that
+these two programs have the same type:</p>
 <pre class="scala"><code>val readsLine: In
 val computesLength: In</code></pre>
-<p>which means we cannot link them with a function without casting: we know that the function to pass to <code>transformOutput</code> should have type <code>String =&gt; Int</code>, but the compiler doesn’t.</p>
+<p>which means we cannot link them with a function without casting: we
+know that the function to pass to <code>transformOutput</code> should have type
+<code>String =&gt; Int</code>, but the compiler doesn’t.</p>
 <pre class="scala"><code>val readsLine: In =
   In.readLine
 val computesLength: In
   In.transformOutput(str =&gt; str.asInstanceOf[String].length)</code></pre>
-<p>The key idea out of this problem is that we can add a <em>type parameter</em> to <code>In</code> which represents the type of its <em>output</em>. The resulting type <code>In[A]</code> lets us write:</p>
+<p>The key idea out of this problem is that we can add a <em>type parameter</em>
+to <code>In</code> which represents the type of its <em>output</em>. The resulting type
+<code>In[A]</code> lets us write:</p>
 <pre class="scala"><code>val readsString: In[String]
 val computesInt: In[Int]</code></pre>
-<p>Note that this doesn’t require us to actually perform any action, we’re still just building a datatype with a sealed trait and case classes, except this datatype now carries enough type information to allow for well typed composition. In other words, <code>In[String]</code> is not a container that contains a <code>String</code>, rather it’s a command to eventually read one, encoded as a datatype.</p>
+<p>Note that this doesn’t require us to actually perform any action,
+we’re still just building a datatype with a sealed trait and case
+classes, except this datatype now carries enough
+type information to allow for well typed composition. In other words,
+<code>In[String]</code> is not a container that contains a <code>String</code>, rather it’s
+a command to eventually read one, encoded as a datatype.</p>
 <p><code>transformOutput</code> can now have a proper type:</p>
 <pre class="scala"><code>def transformOutput[A, B]: (In[A], A =&gt; B) =&gt; In[B]</code></pre>
-<p>This signature has two <em>type variables</em> (or <em>type parameters</em>), <code>A</code> and <code>B</code> . The rule with type variables is that whenever the same type variable is mentioned, the relative types have to match: in this case, <code>(In[A], A =&gt; ...</code> means that the input of the function needs to match the output of the <code>In</code> program, and <code>... =&gt; B) =&gt; In[B]</code> means that the output of the resulting <code>In</code> program will match the output of the function. Therefore in the example above the function we need to pass to <code>transformOutput</code> to connect <code>readsString: In[String]</code> with <code>computesInt: In[Int]</code> has to have type <code>String =&gt; Int</code>, just like we expect.</p>
-<p>Conversely, whenever <em>different</em> type variables appear, the relative types <em>can</em> be different, but they don’t have to, or in other words <code>transformOutput</code> also works if you use it with an <code>In[String]</code> and a <code>String =&gt; String</code>, resulting in another <code>In[String]</code>.</p>
+<p>This signature has two <em>type variables</em> (or <em>type parameters</em>), <code>A</code>
+and <code>B</code> . The rule with type variables is that whenever the same type
+variable is mentioned, the relative types have to match: in this case,
+<code>(In[A], A =&gt; ...</code> means that the input of the function needs to match
+the output of the <code>In</code> program, and <code>... =&gt; B) =&gt; In[B]</code> means that
+the output of the resulting <code>In</code> program will match the output of the
+function. Therefore in the example above the function we need to pass
+to <code>transformOutput</code> to connect <code>readsString: In[String]</code> with
+<code>computesInt: In[Int]</code> has to have type <code>String =&gt; Int</code>, just like we
+expect.</p>
+<p>Conversely, whenever <em>different</em> type variables appear, the relative
+types <em>can</em> be different, but they don’t have to, or in other words
+<code>transformOutput</code> also works if you use it with an <code>In[String]</code> and a
+<code>String =&gt; String</code>, resulting in another <code>In[String]</code>.</p>
 <p>We can now write a proper version of <code>In</code>:</p>
 <pre class="scala"><code>/*
  * carrier:
@@ -324,7 +367,8 @@ object In {
   readLine
     .transformOutput(line =&gt; line.length)
     .transformOutput(length =&gt; length &gt; 10)</code></pre>
-<p>Finally, we need to complete <code>In</code> with an elimination form so that we can embed it into bigger programs, as usual we will translate to <code>IO</code>:</p>
+<p>Finally, we need to complete <code>In</code> with an elimination form so that we
+can embed it into bigger programs, as usual we will translate to <code>IO</code>:</p>
 <pre class="scala"><code>/*
  * carrier:
  *   In[A]
@@ -342,7 +386,10 @@ sealed trait In[A] {
 object In {
   val readLine: In[String]
   ...</code></pre>
-<p>that being said, we won’t be thinking about eliminations forms for the next few articles, as we focus on writing programs <em>with</em> our algebras. We will return to the topic of elimination forms once we talk about <code>IO</code> in more detail.</p>
+<p>that being said, we won’t be thinking about eliminations forms for the
+next few articles, as we focus on writing programs <em>with</em> our
+algebras. We will return to the topic of elimination forms once we
+talk about <code>IO</code> in more detail.</p>
 <h2 id="laws">Laws</h2>
 <p>You might be wondering why I have written the final program as:</p>
 <pre class="scala"><code>val prog1: In[Boolean] =
@@ -352,27 +399,44 @@ object In {
 <p>as opposed to:</p>
 <pre class="scala"><code>val prog2: In[Boolean] =
   readLine.transformOutput(line =&gt; line.length &gt; 10)</code></pre>
-<p><code>prog2</code> seems less verbose, so should we refactor <code>prog1</code> into <code>prog2</code>? Will the behaviour change? Intuitively, it would feel really weird if it did: transforming the output twice ought to be the same of transforming it once with the composite transformation.</p>
+<p><code>prog2</code> seems less verbose, so should we refactor <code>prog1</code> into
+<code>prog2</code>? Will the behaviour change? Intuitively, it would feel really
+weird if it did: transforming the output twice ought to be the same of
+transforming it once with the composite transformation.</p>
 <p>We can encode this type of assumption as a <em>law</em>, something of shape:</p>
 <pre class="scala"><code>expr1 &lt;-&gt; expr2</code></pre>
-<p>where <code>&lt;-&gt;</code> means that <code>expr1</code> can be rewritten into <code>expr2</code>, and vice versa. In our case, we will say that:</p>
+<p>where <code>&lt;-&gt;</code> means that <code>expr1</code> can be rewritten into <code>expr2</code>, and vice versa.
+In our case, we will say that:</p>
 <pre class="scala"><code>p.transformOutput(f).transformOutput(g) &lt;-&gt; p.transformOutput(x =&gt; g(f(x)))
 
 where:
   p: In[A]
   f: A =&gt; B
   g: B =&gt; C</code></pre>
-<p>which means that we can switch between <code>prog1</code> and <code>prog2</code> at will, and not just in the case where <code>p = readLine</code>, <code>f = _.length</code>, and <code>g = _ &gt; 10</code>, but for <em>any</em> <code>p</code>, <code>f</code>, and <code>g</code>, as long they have the correct type. So in this case we use laws as a <em>refactoring aid</em> : they gave us freedom to refactor by specifying which transformations on our programs are harmless.</p>
-<p>By the way, since Scala functions already have an <code>andThen</code> method to express function composition, the law above can be written as:</p>
+<p>which means that we can switch between <code>prog1</code> and <code>prog2</code> at will,
+and not just in the case where <code>p = readLine</code>, <code>f = _.length</code>, and <code>g = _ &gt; 10</code>, but for <em>any</em> <code>p</code>, <code>f</code>, and <code>g</code>, as long they have the
+correct type. So in this case we use laws as a <em>refactoring aid</em> :
+they gave us freedom to refactor by specifying which transformations
+on our programs are harmless.</p>
+<p>By the way, since Scala functions already have an <code>andThen</code> method to
+express function composition, the law above can be written as:</p>
 <pre class="scala"><code>p.transformOutput(f).transformOutput(g) &lt;-&gt; p.transformOutput(f.andThen(g))</code></pre>
-<p>And as it turns out, there is another law concerning <code>transformOutput</code>, the fact that transforming an output with a function that doesn’t change it is the same as not transforming it at all:</p>
+<p>And as it turns out, there is another law concerning
+<code>transformOutput</code>, the fact that transforming an output with a
+function that doesn’t change it is the same as not transforming it at
+all:</p>
 <pre class="scala"><code>p.transformOutput(x =&gt; x) &lt;-&gt; p
 
 where:
   p: In[A]</code></pre>
-<p>If this seems completely obvious, that’s because it is! Many laws are just stating: my algebra behaves in the way you expect.</p>
+<p>If this seems completely obvious, that’s because it is! Many laws are
+just stating: my algebra behaves in the way you expect.</p>
 <h2 id="conclusion">Conclusion</h2>
-<p>In this article we introduced a really important idea: encoding the output of a program by adding a type parameter to the carrier type of our algebra. This enabled us to add the <code>transformOutput</code> combinator, and next time we will use the same insight to model <em>chaining</em>, which is the essence of sequential control flow.</p>
+<p>In this article we introduced a really important idea: encoding the
+output of a program by adding a type parameter to the carrier type of
+our algebra. This enabled us to add the <code>transformOutput</code> combinator,
+and next time we will use the same insight to model <em>chaining</em>, which
+is the essence of sequential control flow.</p>
                 <hr>
             </div>
         </div>

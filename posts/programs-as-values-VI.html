@@ -233,7 +233,10 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <p>I’m now going to introduce the <code>Console</code> algebra, an evolution of <a href="https://systemfw.org/posts/programs-as-values-IV.html">Out</a> and <a href="https://systemfw.org/posts/programs-as-values-V.html">In</a> that will accompany us for the next few instalments of this series.</p>
+                <p>I’m now going to introduce the <code>Console</code> algebra, an evolution of
+<a href="https://systemfw.org/posts/programs-as-values-IV.html">Out</a> and
+<a href="https://systemfw.org/posts/programs-as-values-V.html">In</a> that will
+accompany us for the next few instalments of this series.</p>
 <p>We will start from an imperfect version, here’s how it looks like:</p>
 <pre class="scala"><code>/*
  * carrier:
@@ -258,7 +261,9 @@
    val readLine: Console[String]
    def print(s: String): Console[Unit]
    ...</code></pre>
-<p><code>readLine</code> and <code>transformOutput</code> have a familiar shape, but <code>print</code> and <code>andThen</code> need to fit the <code>Console[A]</code> shape, so we use the <code>Unit</code> type to express that printing has no meaningful output:</p>
+<p><code>readLine</code> and <code>transformOutput</code> have a familiar shape, but <code>print</code>
+and <code>andThen</code> need to fit the <code>Console[A]</code> shape, so we use the <code>Unit</code>
+type to express that printing has no meaningful output:</p>
 <pre class="scala"><code>def print(s: String): Console[Unit]</code></pre>
 <p>and parameterise <code>andThen</code> with <code>A</code> everywhere:</p>
 <pre class="scala"><code>// andThen[A]: (Console[A], Console[A]) =&gt; Console[A]
@@ -274,17 +279,22 @@ val lineLength: Console[Int] =
   Console
     .readLine
     .transformOutput { line =&gt; line.length }</code></pre>
-<p>Obviously to actually execute these programs, they have to be converted to <code>IO</code> via <code>run</code> and then embedded into an <code>IOApp</code>, but we will ignore the elimination form for the remainder of the article, and focus on writing programs with <code>Console</code>.</p>
+<p>Obviously to actually execute these programs, they have to be
+converted to <code>IO</code> via <code>run</code> and then embedded into an <code>IOApp</code>, but we
+will ignore the elimination form for the remainder of the article, and
+focus on writing programs with <code>Console</code>.</p>
 <h2 id="a-sample-program">A sample program</h2>
-<p>We will explore and evolve the <code>Console</code> algebra whilst trying to write the following program:</p>
+<p>We will explore and evolve the <code>Console</code> algebra whilst
+trying to write the following program:</p>
 <ul>
 <li>Ask the user to enter their username.</li>
 <li>Read it from stdin.</li>
-<li>Create a greeting message like <code>&quot;Hello, $username!&quot;</code>.</li>
+<li>Create a greeting message like <code>"Hello, $username!"</code>.</li>
 <li>Print the message to stdout.</li>
 <li>Extra: if the username at point 2 is empty, ask again.</li>
 </ul>
-<p>We will do it in pieces, starting from a simple prompt that doesn’t handle empty usernames:</p>
+<p>We will do it in pieces, starting from a simple prompt that doesn’t
+handle empty usernames:</p>
 <pre class="scala"><code>val namePrompt: Console[String] =
   Console
     .print(&quot;What's your username? &quot;)
@@ -295,8 +305,13 @@ type mismatch;
 [error]  required: Console[Unit]
 [error]       .andThen(Console.readLine)
 [error]                        ^</code></pre>
-<p>Uh-oh, it doesn’t compile: <code>andThen</code> wants both arguments to be <code>Console</code> programs with the same type of output, but <code>print(s)</code> and <code>readLine</code> have different output types, respectively <code>Console[Unit]</code> and <code>Console[String]</code>.</p>
-<p>This limitation doesn’t seem reasonable, so let’s relax the type of <code>andThen</code> to allow the second program to have a different output type, which will also be the output type of the overall expression:</p>
+<p>Uh-oh, it doesn’t compile: <code>andThen</code> wants both arguments to be
+<code>Console</code> programs with the same type of output, but <code>print(s)</code> and
+<code>readLine</code> have different output types, respectively <code>Console[Unit]</code>
+and <code>Console[String]</code>.</p>
+<p>This limitation doesn’t seem reasonable, so let’s relax the type of
+<code>andThen</code> to allow the second program to have a different output type,
+which will also be the output type of the overall expression:</p>
 <pre class="scala"><code>// andThen[A, B]: (Console[A], Console[B]) =&gt; Console[B]
 
 sealed trait Console[A] {
@@ -307,28 +322,44 @@ sealed trait Console[A] {
   Console
     .print(&quot;What's your username? &quot;)
     .andThen(Console.readLine)</code></pre>
-<p>Next step is to create the greeting message, which sounds like a job for <code>transformOutput</code>:</p>
+<p>Next step is to create the greeting message, which sounds like a job for
+<code>transformOutput</code>:</p>
 <pre class="scala"><code>val promptWithGreeting: Console[String] =
   Console
     .print(&quot;What's your username? &quot;)
     .andThen(Console.readLine)
     .transformOutput { username =&gt; s&quot;Hello, $username!&quot; }</code></pre>
-<p>Ok we’re getting there, all that’s left to do now is to print the greeting message to stdout. And here we stumble onto an interesting problem.</p>
+<p>Ok we’re getting there, all that’s left to do now is to print the
+greeting message to stdout. And here we stumble onto an interesting
+problem.</p>
 <h2 id="chaining">Chaining</h2>
-<p>The program we need to write has to print something we’ve previously read (and transformed). In slightly more general terms, it needs to use the <em>output</em> of our <code>promptWithGreeting</code> program to build another program, the program that prints that output.</p>
-<p>In execution as evaluation, this idea is expressed by actually running an action and naming its result:</p>
+<p>The program we need to write has to print something we’ve previously
+read (and transformed). In slightly more general terms, it needs to
+use the <em>output</em> of our <code>promptWithGreeting</code> program to build another
+program, the program that prints that output.</p>
+<p>In execution as evaluation, this idea is expressed by actually running
+an action and naming its result:</p>
 <pre class="scala"><code>val line: String = scala.io.StdIn.readLine()
 println(line)</code></pre>
 <p>but as usual, we want to compose programs instead.</p>
-<p>What we need is a change in perspective: whenever we need the output of a program <code>p1: Console[A]</code> to build another program <code>p2: Console[B]</code>, that means that <code>p2</code> <em>depends</em> on the output of <code>p1</code>.</p>
-<p>We’ve seen that the output of a <code>Console[A]</code> program is represented by its output type parameter <code>A</code>, and the idea that <code>Y</code> depends on <code>X</code> is expressed by a function <code>X =&gt; Y</code>, so the concept that <code>p2: Console[B]</code> depends on the output of <code>p1: Console[A]</code> can be written as <code>A =&gt; Console[B]</code>.</p>
-<p>And therein lies our problem, the only combinator that can connect two <code>Console</code> programs is <code>andThen</code>, and we can see from its type that there is no dependency between the two programs it takes as input:</p>
+<p>What we need is a change in perspective: whenever we need the output
+of a program <code>p1: Console[A]</code> to build another program <code>p2: Console[B]</code>, that means that <code>p2</code> <em>depends</em> on the output of <code>p1</code>.</p>
+<p>We’ve seen that the output of a <code>Console[A]</code> program is represented by
+its output type parameter <code>A</code>, and the idea that <code>Y</code> depends on <code>X</code> is
+expressed by a function <code>X =&gt; Y</code>, so the concept that <code>p2: Console[B]</code>
+depends on the output of <code>p1: Console[A]</code> can be written as <code>A =&gt; Console[B]</code>.</p>
+<p>And therein lies our problem, the only combinator that can connect two
+<code>Console</code> programs is <code>andThen</code>, and we can see from its type that
+there is no dependency between the two programs it takes as input:</p>
 <pre class="scala"><code>// andThen[A, B]: (Console[A], Console[B]) =&gt; Console[B]
 
 sealed trait Console[A] {
   def andThen[B](next: Console[B]): Console[B]
   ...</code></pre>
-<p>Let’s instead introduce a new <code>chain</code> combinator which takes dependency into account. It will take a <code>Console[A]</code> program, and a function that uses the output of that program to decide what the next program should be:</p>
+<p>Let’s instead introduce a new <code>chain</code> combinator which takes
+dependency into account. It will take a <code>Console[A]</code> program, and a
+function that uses the output of that program to decide what the next
+program should be:</p>
 <pre class="scala"><code>// chain[A, B]: (Console[A], A =&gt; Console[B]) =&gt; Console[B]
 
 sealed trait Console[A] {
@@ -357,10 +388,20 @@ val echo: Console[Unit] =
     .chain { _ =&gt; Console.readLine }
     .transformOutput { username =&gt; s&quot;Hello, $username!&quot; }
     .chain { greeting =&gt; Console.print(greeting) }</code></pre>
-<p>Note that in <code>promptAndGreet</code> we’ve replaced <code>print.andThen(readLine)</code> with <code>print.chain(_ =&gt; readLine)</code>, i.e. a special case of <code>chain</code> where the shape of the next program doesn’t depend on the output of the previous one, and can ignore it.</p>
-<p>The ability to depend on the output of another computation has clearly gained us some power, but just how much power exactly? As it turns out, a huge amount: <code>next: A =&gt; Console[B]</code> can use <code>A</code> in <em>arbitrary</em> ways to decide what the next computation should be. In <code>nameAndGreet</code> we simply passed it through, but <code>next</code> could include <code>if/else</code> expressions, recursion, pattern matching, and so on. In other words, <code>chain</code> allows <em>general control flow</em>.</p>
+<p>Note that in <code>promptAndGreet</code> we’ve replaced <code>print.andThen(readLine)</code>
+with <code>print.chain(_ =&gt; readLine)</code>, i.e. a special case of <code>chain</code>
+where the shape of the next program doesn’t depend on the output of
+the previous one, and can ignore it.</p>
+<p>The ability to depend on the output of another computation has clearly
+gained us some power, but just how much power exactly? As it turns
+out, a huge amount: <code>next: A =&gt; Console[B]</code> can use <code>A</code> in <em>arbitrary</em>
+ways to decide what the next computation should be. In <code>nameAndGreet</code>
+we simply passed it through, but <code>next</code> could include <code>if/else</code>
+expressions, recursion, pattern matching, and so on. In other words,
+<code>chain</code> allows <em>general control flow</em>.</p>
 <h2 id="emitting-outputs">Emitting outputs</h2>
-<p>Here’s how our sample program looks like so far, with some minimal refactoring:</p>
+<p>Here’s how our sample program looks like so far, with some
+minimal refactoring:</p>
 <pre class="scala"><code>val namePrompt: Console[String] =
   Console
     .print(&quot;What's your username? &quot;)
@@ -370,16 +411,23 @@ val promptAndGreet: Console[Unit] =
   namePrompt
     .transformOutput { username =&gt; s&quot;Hello, $username!&quot; }
     .chain { greeting =&gt; Console.print(greeting) }</code></pre>
-<p>The only piece left is asking for a username again if the user inserts an empty one. We could go and modify <code>namePrompt</code> accordingly, but when you think about it there isn’t much about this logic that is actually specific to <code>namePrompt</code>: we simply want to repeat a <code>p: Console[String]</code> until its output is non empty.</p>
-<p>We’re in programs as values, so programs that manipulate other programs are our bread and butter:</p>
+<p>The only piece left is asking for a username again if the user inserts
+an empty one. We could go and modify <code>namePrompt</code> accordingly, but
+when you think about it there isn’t much about this logic that is
+actually specific to <code>namePrompt</code>: we simply want to repeat a <code>p: Console[String]</code> until its output is non empty.</p>
+<p>We’re in programs as values, so programs that manipulate other
+programs are our bread and butter:</p>
 <pre class="scala"><code>def repeatOnEmpty(p: Console[String]): Console[String] = ???</code></pre>
-<p>So how do we implement <code>repeatOnEmpty</code>? We need to use the string outputted by <code>p</code> to make a decision based on whether it’s empty or not, which is to say we need <code>chain</code>:</p>
+<p>So how do we implement <code>repeatOnEmpty</code>? We need to use the string
+outputted by <code>p</code> to make a decision based on whether it’s empty or
+not, which is to say we need <code>chain</code>:</p>
 <pre class="scala"><code>def repeatOnEmpty(p: Console[String]): Console[String] =
   p.chain { str =&gt;
     if (str.isEmpty) ???
     else ???
   }</code></pre>
-<p>if the string is indeed empty, we simply repeat the whole process using recursion:</p>
+<p>if the string is indeed empty, we simply repeat the whole process
+using recursion:</p>
 <pre class="scala"><code>def repeatOnEmpty(p: Console[String]): Console[String] =
   p.chain { str =&gt;
     if (str.isEmpty) repeatOnEmpty(p)
@@ -397,8 +445,15 @@ type mismatch;
 [error]  required: Console[String]
 [error]       else str
 [error]            ^</code></pre>
-<p>Oh, another compile error… both branches of an <code>if/else</code> need to have the same type, whereas in our case the <code>if</code> branch has type <code>Console[String]</code>, and the <code>else</code> branch has type <code>String</code>.</p>
-<p>On second thought, it doesn’t make sense for <code>repeatOnEmpty</code> to return a <code>String</code>: <code>repeatOnEmpty</code> needs to return a <em>program</em>, i.e. an instance of a datatype that represents commands that will eventually be executed, and a <code>String</code> is not the same thing as a command to emit one. This means that our <code>Console</code> algebra is missing an introduction form, the ability to emit an output:</p>
+<p>Oh, another compile error… both branches of an <code>if/else</code> need to
+have the same type, whereas in our case the <code>if</code> branch has type
+<code>Console[String]</code>, and the <code>else</code> branch has type <code>String</code>.</p>
+<p>On second thought, it doesn’t make sense for <code>repeatOnEmpty</code> to return
+a <code>String</code>: <code>repeatOnEmpty</code> needs to return a <em>program</em>, i.e. an
+instance of a datatype that represents commands that will eventually
+be executed, and a <code>String</code> is not the same thing as a command to emit
+one. This means that our <code>Console</code> algebra is missing an introduction
+form, the ability to emit an output:</p>
 <pre class="scala"><code>// emitOutput[A]: A =&gt; Console[A]
 
 object Console {
@@ -454,7 +509,8 @@ val promptAndGreet: Console[Unit] =
     .transformOutput { username =&gt; s&quot;Hello, $username!&quot; }
     .chain { greeting =&gt; Console.print(greeting) }</code></pre>
 <h4 id="note-on-conciseness">Note on conciseness</h4>
-<p>You might be thinking that our program above is rather verbose compared to just:</p>
+<p>You might be thinking that our program above is rather
+verbose compared to just:</p>
 <pre class="scala"><code> def p: Unit = {
    var user: String = &quot;&quot;
    while (user.isEmpty) {
@@ -463,18 +519,34 @@ val promptAndGreet: Console[Unit] =
    }
    println(s&quot;Hello, $user!&quot;)
  }</code></pre>
-<p>but remember that I’m really spelling things out in the examples. Here’s how it looks like in real code, using <code>cats.effect.IO</code> and combinators defined in the <a href="github.com/typelevel/cats">cats</a> library:</p>
+<p>but remember that I’m really spelling things out in the examples.
+Here’s how it looks like in real code, using <code>cats.effect.IO</code> and
+combinators defined in the <a href="github.com/typelevel/cats">cats</a> library:</p>
 <pre class="scala"><code>  val p: IO[Unit] =
     (IO.println(&quot;What's your name?&quot;) &gt;&gt; IO.readLine)
       .iterateWhile(_.isEmpty)
       .flatMap { user =&gt; IO.println(s&quot;Hello, $user!&quot;) }</code></pre>
 <h2 id="conclusion">Conclusion</h2>
-<p>In this article we saw the essential concept of <em>chaining</em>: creating programs that can depend on the output of a previous program. Chaining represents a big leap in the expressiveness of our algebras, as we are now able to express <em>arbitrary sequential control flow</em>.</p>
-<p>Next time we will explore some of properties of <code>chain</code> and <code>emitOutput</code>, as well as introducing the real names used in <a href="github.com/typelevel/cats">cats</a> and <a href="github.com/typelevel/cats-effect">cats-effect</a>, as we make our way towards writing real code in programs as values.</p>
+<p>In this article we saw the essential concept of <em>chaining</em>: creating
+programs that can depend on the output of a previous program.
+Chaining represents a big leap in the expressiveness of our algebras,
+as we are now able to express <em>arbitrary sequential control flow</em>.</p>
+<p>Next time we will explore some of properties of <code>chain</code> and
+<code>emitOutput</code>, as well as introducing the real names used in
+<a href="github.com/typelevel/cats">cats</a> and
+<a href="github.com/typelevel/cats-effect">cats-effect</a>, as we make our way
+towards writing real code in programs as values.</p>
 <hr />
 <h2 id="appendix-implementation">Appendix: implementation</h2>
-<p>This series puts a big stress on <em>algebraic thinking</em>: reasoning on programs as values datatypes using the operations defined on them rather than their internal structure. This is a powerful approach because it scales from simple datatypes like <code>Option</code>, to datatypes like <code>IO</code> whose internal structure and implementation is extremely advanced.</p>
-<p>However, there is a risk that you might think that “command” datatypes like <code>Console</code> are utterly magical, so I’m going to make an exception and show you an implementation for it:</p>
+<p>This series puts a big stress on <em>algebraic thinking</em>: reasoning on
+programs as values datatypes using the operations defined on them
+rather than their internal structure. This is a powerful approach
+because it scales from simple datatypes like <code>Option</code>, to datatypes
+like <code>IO</code> whose internal structure and implementation is extremely
+advanced.</p>
+<p>However, there is a risk that you might think that “command” datatypes
+like <code>Console</code> are utterly magical, so I’m going to make an exception
+and show you an implementation for it:</p>
 <pre class="scala"><code>sealed trait Console[A] {
   def chain[B](next: A =&gt; Console[B]): Console[B] =
     Console.Chain(this, next)
@@ -512,7 +584,11 @@ object Console {
       translateToIO(fa).flatMap { x =&gt; translateToIO(f(x)) }
   }
 }</code></pre>
-<p>As you can see, we really do mean programs are <em>values</em>: <code>Console</code> is literally a datatype, which then gets translated to <code>IO</code>, which is another datatype. All the execution happens in the layer that interprets <code>IO</code> into actual side effects when the JVM calls <code>main</code>, as we will see once our series gets to discussing <code>IO</code>.</p>
+<p>As you can see, we really do mean programs are <em>values</em>: <code>Console</code> is
+literally a datatype, which then gets translated to <code>IO</code>, which is
+another datatype. All the execution happens in the layer that
+interprets <code>IO</code> into actual side effects when the JVM calls <code>main</code>, as
+we will see once our series gets to discussing <code>IO</code>.</p>
                 <hr>
             </div>
         </div>

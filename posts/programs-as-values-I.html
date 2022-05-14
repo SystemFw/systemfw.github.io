@@ -233,20 +233,41 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <p>This is the first post in a series about a programming paradigm I like to call <strong>programs as values</strong>.</p>
-<p>In Haskell and part of the Scala community, it is also known as purely functional programming (or pure FP), but I will not use that term here, to avoid any ambiguity with the discussion about <em>imperative</em> vs <em>declarative</em> code, which are both possible within programs as values.</p>
-<p>I also wish to distinguish programs as values from other approaches to functional programming such as <strong>effects and handlers</strong> as seen in Unison, Eff or Koka, which I might talk about in the future.</p>
-<p>I will make the following assumptions about my readers, based on my typical audience:</p>
+                <p>This is the first post in a series about a programming paradigm I like
+to call <strong>programs as values</strong>.</p>
+<p>In Haskell and part of the Scala community, it is also known as purely
+functional programming (or pure FP), but I will not use that term
+here, to avoid any ambiguity with the discussion about <em>imperative</em> vs
+<em>declarative</em> code, which are both possible within programs as values.</p>
+<p>I also wish to distinguish programs as values from other approaches to
+functional programming such as <strong>effects and handlers</strong> as seen in
+Unison, Eff or Koka, which I might talk about in the future.</p>
+<p>I will make the following assumptions about my readers, based on my
+typical audience:</p>
 <ul>
-<li>You know Scala syntax, as well as FP basics like ADTs, recursion, higher order functions and pattern matching.</li>
-<li>You’re are vaguely aware of the existence of libraries like <a href="https://github.com/typelevel/cats-effect">cats-effect</a> and <a href="https://github.com/functional-streams-for-scala/fs2">fs2</a>, for example through one of my <a href="https://systemfw.org/talks">talks</a>.</li>
-<li>You’re looking for a deeper, lasting understanding of the core ideas behind programs as values, in addition to the specifics of a single library.</li>
+<li>You know Scala syntax, as well as FP basics like ADTs, recursion,
+higher order functions and pattern matching.</li>
+<li>You’re are vaguely aware of the existence of libraries like
+<a href="https://github.com/typelevel/cats-effect">cats-effect</a> and
+<a href="https://github.com/functional-streams-for-scala/fs2">fs2</a>, for
+example through one of my <a href="https://systemfw.org/talks">talks</a>.</li>
+<li>You’re looking for a deeper, lasting understanding of the core ideas
+behind programs as values, in addition to the specifics of a single
+library.</li>
 </ul>
 <h2 id="compositionality">Compositionality</h2>
-<p>Let’s start from the concept of compositionality, which is the idea that we can understand the <strong>whole</strong> by understanding the <strong>parts</strong> and the <strong>rules of composition</strong>.</p>
-<p>The key characteristic of compositional systems is that they can be decomposed into parts that still make sense on their own and, conversely, they can be built by assembling smaller parts together.<br />
-This fits well with the limited capacity of our brains: if I asked you to build a model of the Colosseum, would you rather assemble it with Lego, or sculpt it with marble?</p>
-<p>To see how the concept applies to software, we will consider this simple example program: <strong>repeatedly print “hello”, stopping after 10 iterations, once per second</strong>.</p>
+<p>Let’s start from the concept of compositionality, which is the idea
+that we can understand the <strong>whole</strong> by understanding the <strong>parts</strong>
+and the <strong>rules of composition</strong>.</p>
+<p>The key characteristic of compositional systems is that they can be
+decomposed into parts that still make sense on their own and,
+conversely, they can be built by assembling smaller parts together.<br />
+This fits well with the limited capacity of our brains: if I asked you
+to build a model of the Colosseum, would you rather assemble it with
+Lego, or sculpt it with marble?</p>
+<p>To see how the concept applies to software, we will consider this
+simple example program: <strong>repeatedly print “hello”, stopping after 10
+iterations, once per second</strong>.</p>
 <p>We can implement the above program with:</p>
 <pre class="scala"><code>var i = 0
 while(i &lt; 10) {
@@ -254,7 +275,8 @@ while(i &lt; 10) {
  println(&quot;hello&quot;)
  i = i + 1
 }</code></pre>
-<p>but note how that’s not very compositional. First of all, two logical subprograms cannot be combined without changes:</p>
+<p>but note how that’s not very compositional. First of all, two logical
+subprograms cannot be combined without changes:</p>
 <pre class="scala"><code>def p1 = {
  var i = 0
  while(i &lt; 10) {
@@ -266,22 +288,36 @@ while(i &lt; 10) {
 def p2 = Thread.sleep(1000)
 
 def p3 = ??? //combine p1 and p2?</code></pre>
-<p>And second, not all the constituent parts make sense on their own, for example <code>i = i + 1</code> only makes sense when considered together with <code>var i = 0</code> and <code>while(i &lt; 10)</code>.</p>
-<p>Low compositionality is fine in small doses, but it scales poorly with complexity: even a slightly more complex version of the program (e.g stop after 10 seconds or 10 iterations, waiting a random interval between iterations) leads to more entangled code. In the extreme, it will result in spaghetti code, code which has such a low level of compositionality that it can’t be separated into its constituent parts at all.</p>
-<p>Compare instead with this alternative solution, which uses <code>fs2.Stream</code>:</p>
+<p>And second, not all the constituent parts make sense on their own, for
+example <code>i = i + 1</code> only makes sense when considered together with
+<code>var i = 0</code> and <code>while(i &lt; 10)</code>.</p>
+<p>Low compositionality is fine in small doses, but it scales poorly with
+complexity: even a slightly more complex version of the program (e.g
+stop after 10 seconds or 10 iterations, waiting a random interval
+between iterations) leads to more entangled code.
+In the extreme, it will result in spaghetti code, code which has such
+a low level of compositionality that it can’t be separated into its
+constituent parts at all.</p>
+<p>Compare instead with this alternative solution, which uses
+<code>fs2.Stream</code>:</p>
 <pre class="scala"><code>val p = IO.println(&quot;hello&quot;)
 
 Stream.repeatEval(p)
       .take(10)
       .metered(1.second)</code></pre>
-<p>This code is highly compositional, it is made of smaller parts, which all make sense as individual programs:</p>
+<p>This code is highly compositional, it is made of smaller parts, which
+all make sense as individual programs:</p>
 <ul>
-<li><code>IO.println(&quot;hello&quot;)</code> is the program that prints “hello”.</li>
-<li><code>repeatEval</code> is the program that executes another program indefinitely.</li>
-<li><code>take(n)</code> is the program that evaluates the first <code>n</code> iterations of another program.</li>
-<li><code>metered</code> is the program that executes another program at the given rate.</li>
+<li><code>IO.println("hello")</code> is the program that prints “hello”.</li>
+<li><code>repeatEval</code> is the program that executes another program
+indefinitely.</li>
+<li><code>take(n)</code> is the program that evaluates the first <code>n</code> iterations of
+another program.</li>
+<li><code>metered</code> is the program that executes another program at the given
+rate.</li>
 </ul>
-<p>Even without understanding all the details, it should be clear that it maintains this compositional quality in the more complex example too:</p>
+<p>Even without understanding all the details, it should be clear that it
+maintains this compositional quality in the more complex example too:</p>
 <pre class="scala"><code>val randomWait =
   Stream
     .eval(Random.scalaUtilRandom[IO])
@@ -296,8 +332,12 @@ Stream
   .take(10)
   .interruptAfter(10.seconds)</code></pre>
 <h2 id="conclusion">Conclusion</h2>
-<p>The two examples above are rather extreme, and may give the impression that compositionality is a binary attribute. In reality, it’s on a spectrum: the more compositional our software is, the better we can cope with its complexity.<br />
-And that leads me to the main point of this post: what is programs as values about?</p>
+<p>The two examples above are rather extreme, and may give the impression
+that compositionality is a binary attribute. In reality, it’s on a
+spectrum: the more compositional our software is, the better we can
+cope with its complexity.<br />
+And that leads me to the main point of this post: what is programs as
+values about?</p>
 <p><strong>Programs as values is about removing barriers to compositionality.</strong></p>
                 <hr>
             </div>

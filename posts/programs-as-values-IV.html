@@ -233,50 +233,112 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <p>In the previous instalments of this series, we’ve introduced two core components of the programs as values paradigm: <em>datatypes</em> that represent effects, and <em>functions</em> that combine instances of those datatypes in order to construct programs by describing control flow explicitly.</p>
-<p>Today we will formalise and clarify this structure, by introducing the concept of an <strong>algebra</strong>.</p>
+                <p>In the previous instalments of this series, we’ve introduced two core
+components of the programs as values paradigm: <em>datatypes</em> that
+represent effects, and <em>functions</em> that combine instances of those
+datatypes in order to construct programs by describing control flow
+explicitly.</p>
+<p>Today we will formalise and clarify this structure, by introducing the
+concept of an <strong>algebra</strong>.</p>
 <blockquote>
-<p>Note: In an unfortunate abuse of notation, the word “algebra” is used with a few different meanings in the FP world. See the Appendix for more details on the terminology.</p>
+<p>Note: In an unfortunate abuse of notation, the word “algebra” is
+used with a few different meanings in the FP world. See the Appendix
+for more details on the terminology.</p>
 </blockquote>
 <p>An algebra is a structure consisting of four components:</p>
 <ol type="1">
-<li><p>A single, concrete type <code>T</code>, which is sometimes called the <strong>carrier</strong> of the algebra. Depending on the algebra, it can have different shapes: <code>V</code>, <code>F[A]</code>, <code>G[E, R]</code>, etc. The carrier type is the datatype that represents the particular effect its algebra encodes.</p></li>
-<li><p>A set of functions which return values of the carrier type <code>T</code>, called <strong>introduction forms</strong>. These functions can all take different inputs, but what characterises them as introduction forms is that none of their inputs is of the carrier type <code>T</code>, i.e. they <em>construct</em> or <em>introduce</em> <code>T</code>. Introduction forms are the <em>primitive programs</em> of their algebra, the starting points from which we can build more complex logic.</p></li>
-<li><p>A set of functions which return values of the carrier type <code>T</code>, called <strong>combinators</strong>. These functions can all take different inputs, but at least one of those inputs needs to be of the carrier type <code>T</code>. In other words, a combinator takes one or more programs in <code>T</code>, and returns another program in <code>T</code>.<br />
-Combinators are the essential building blocks of programs as values we’ve been talking about so far, they take smaller programs and construct bigger programs, often by explicitly describing some form of control flow. Most of the logic in your code will be expressed through combinators.</p></li>
-<li><p>A set of functions called <strong>elimination forms</strong>. They can all take different inputs, but one of those inputs needs to be of the carrier type <code>T</code>. Furthermore, their output needs to be a <em>different type</em> from <code>T</code>, i.e. they <em>eliminate</em> <code>T</code>.<br />
-Informally, elimination forms encode the concept of “running” a program written in a specific algebra after we’re done constructing it. The concept of running is however expressed as a <em>translation</em> from the carrier type <code>T</code> to another type.</p></li>
+<li><p>A single, concrete type <code>T</code>, which is sometimes called the <strong>carrier</strong> of the
+algebra. Depending on the algebra, it can have different shapes: <code>V</code>,
+<code>F[A]</code>, <code>G[E, R]</code>, etc. The carrier type is the datatype that
+represents the particular effect its algebra encodes.</p></li>
+<li><p>A set of functions which return values of the carrier type <code>T</code>, called
+<strong>introduction forms</strong>. These functions can all take different
+inputs, but what characterises them as introduction forms is that
+none of their inputs is of the carrier type <code>T</code>, i.e. they
+<em>construct</em> or <em>introduce</em> <code>T</code>. Introduction forms are the <em>primitive programs</em> of
+their algebra, the starting points from which we can build more
+complex logic.</p></li>
+<li><p>A set of functions which return values of the carrier type <code>T</code>, called
+<strong>combinators</strong>. These functions can all take different inputs, but
+at least one of those inputs needs to be of the carrier type <code>T</code>. In
+other words, a combinator takes one or more programs in <code>T</code>, and
+returns another program in <code>T</code>.<br />
+Combinators are the essential building blocks of programs as values
+we’ve been talking about so far, they take smaller programs and
+construct bigger programs, often by explicitly describing some form of
+control flow. Most of the logic in your code will be expressed
+through combinators.</p></li>
+<li><p>A set of functions called <strong>elimination forms</strong>. They can all take
+different inputs, but one of those inputs needs to be of the carrier
+type <code>T</code>. Furthermore, their output needs to be a <em>different type</em>
+from <code>T</code>, i.e. they <em>eliminate</em> <code>T</code>.<br />
+Informally, elimination forms encode the concept of “running” a
+program written in a specific algebra after we’re done constructing it.
+The concept of running is however expressed as a <em>translation</em> from
+the carrier type <code>T</code> to another type.</p></li>
 </ol>
-<p>In some cases, algebras also have a fifth component: <strong>laws</strong>, i.e. equalities between programs written in the algebra. We won’t be talking much about laws in this post, but they will be more prominent later.</p>
-<p>So to recap, to build a program in a given algebra we start from the introduction forms, and use combinators to express all the logic we need. Once we’re done, we run it by translating it to another type via one of the elimination forms. Another way to look at it is that each algebra describes a <em>mini language</em>: we write programs in that language, and then translate them to another language, all the way to the most general language of all, which is, as we will see, <code>IO</code>.</p>
+<p>In some cases, algebras also have a fifth component: <strong>laws</strong>, i.e.
+equalities between programs written in the algebra. We won’t be
+talking much about laws in this post, but they will be more prominent
+later.</p>
+<p>So to recap, to build a program in a given algebra we start from the
+introduction forms, and use combinators to express all the logic we
+need. Once we’re done, we run it by translating it to another type via
+one of the elimination forms. Another way to look at it is that each
+algebra describes a <em>mini language</em>: we write programs in that
+language, and then translate them to another language, all the way to
+the most general language of all, which is, as we will see, <code>IO</code>.</p>
 <p>We’re now ready to look at some concrete examples.</p>
 <h2 id="the-doc-algebra">The Doc algebra</h2>
-<p>For our first example, we’re going to look at <a href="https://github.com/typelevel/paiges">paiges</a>, a pretty printing library that lets you generate text that needs to be well formatted, with paragraph wrapping at different line lengths. The entire library is centred around a document algebra, so let’s look at its components in more detail.</p>
-<p>The carrier type of the algebra is called <code>Doc</code>, which means we represent documents as programs of type <code>Doc</code>, like <code>val myDoc: Doc</code>. It might sound strange that we’re referring to a static artifact such as a document as a “program”, but you will see that the mindset we’re working in doesn’t change that much once we move to dynamic behavior with types such as <code>cats.effect.IO</code> or <code>cats.parse.Parser</code>.</p>
-<p>The introduction forms are the initial building blocks, as per their definition they create values of type <code>Doc</code> without requiring any value of type <code>Doc</code> as input. Here are a few:</p>
+<p>For our first example, we’re going to look at
+<a href="https://github.com/typelevel/paiges">paiges</a>, a pretty printing
+library that lets you generate text that needs to be well formatted,
+with paragraph wrapping at different line lengths. The entire library
+is centred around a document algebra, so let’s look at its components
+in more detail.</p>
+<p>The carrier type of the algebra is called <code>Doc</code>, which means we
+represent documents as programs of type <code>Doc</code>, like <code>val myDoc: Doc</code>.
+It might sound strange that we’re referring to a static artifact such
+as a document as a “program”, but you will see that the mindset we’re
+working in doesn’t change that much once we move to dynamic behavior
+with types such as <code>cats.effect.IO</code> or <code>cats.parse.Parser</code>.</p>
+<p>The introduction forms are the initial building blocks, as per their
+definition they create values of type <code>Doc</code> without requiring any
+value of type <code>Doc</code> as input.
+Here are a few:</p>
 <pre class="scala"><code>Doc.text: String =&gt; Doc
 Doc.char: Char =&gt; Doc
 Doc.spaces: Int =&gt; Doc
 Doc.comma: Doc
 Doc.line: Doc
 ... // and more</code></pre>
-<p>Note that I’m showing them as functions to make the types clearer, but they are generally methods in Scala, so:</p>
+<p>Note that I’m showing them as functions to make the types clearer,
+but they are generally methods in Scala, so:</p>
 <pre class="scala"><code>val char: Char =&gt; Doc
 // is more typically written as
 def char(c: Char): Doc</code></pre>
-<p>also, they tend to appear in the companion object of the carrier type, but don’t use that as a strict rule, sometimes combinators are there too.</p>
-<p>Introduction forms have shape <code>(A, B, ..) =&gt; Doc</code>, so you might be wondering where do primitive values such as <code>comma</code> or <code>line</code> fit. You can think of them as introduction forms from <code>Unit</code> to the carrier:</p>
+<p>also, they tend to appear in the companion object of the carrier type,
+but don’t use that as a strict rule, sometimes combinators are there
+too.</p>
+<p>Introduction forms have shape <code>(A, B, ..) =&gt; Doc</code>, so you might be
+wondering where do primitive values such as <code>comma</code> or <code>line</code> fit. You
+can think of them as introduction forms from <code>Unit</code> to the carrier:</p>
 <pre class="scala"><code>val comma: Doc
 // can be thought as
 val comma: () =&gt; Doc</code></pre>
-<p>Let’s now look at combinators, functions that take one or more values of type <code>Doc</code> and return a value of type <code>Doc</code>. Combinators will express the lion’s share of our logic, so much so that libraries based on algebras are often called <em>combinator libraries</em>. Here are a few:</p>
+<p>Let’s now look at combinators, functions that take one or more values
+of type <code>Doc</code> and return a value of type <code>Doc</code>. Combinators will
+express the lion’s share of our logic, so much so that libraries based
+on algebras are often called <em>combinator libraries</em>. Here are a few:</p>
 <pre class="scala"><code>indent: (Doc, Int) =&gt; Doc
 line: (Doc, Doc) =&gt; Doc
 bracketBy: (Doc, Doc, Doc, Int) =&gt; Doc
 aligned: Doc =&gt; Doc
 stack: Iterable[Doc] =&gt; Doc
 ... // and more</code></pre>
-<p>Again, I wrote them as standalone functions to make the types clearer, in reality they are written as instance methods, which obscures the fact that at least one of their inputs (<code>this</code>) is of type <code>Doc</code>:</p>
+<p>Again, I wrote them as standalone functions to make the types clearer,
+in reality they are written as instance methods, which obscures the
+fact that at least one of their inputs (<code>this</code>) is of type <code>Doc</code>:</p>
 <pre class="scala"><code>sealed trait Doc {
   def indent(i: Int): Doc
   def line(that: Doc): Doc
@@ -287,7 +349,10 @@ stack: Iterable[Doc] =&gt; Doc
 object Doc {
   def stack(ds: Iterable[Doc]): Doc
   ... </code></pre>
-<p><code>Doc.stack</code> is a notable exception, it cannot be an instance method on <code>Doc</code> because it operates on a <em>collection</em> of docs. The same intuition about combinators applies though: <code>stack</code> combines programs in the <code>Doc</code> algebra into a bigger program in the <code>Doc</code> algebra.</p>
+<p><code>Doc.stack</code> is a notable exception, it cannot be an instance method on
+<code>Doc</code> because it operates on a <em>collection</em> of docs. The same
+intuition about combinators applies though: <code>stack</code> combines programs
+in the <code>Doc</code> algebra into a bigger program in the <code>Doc</code> algebra.</p>
 <p>Finally, eliminations forms translate <code>Doc</code> programs to another type:</p>
 <pre class="scala"><code>isEmpty: Doc =&gt; Boolean
 maxWidth: Doc =&gt; Int
@@ -312,13 +377,17 @@ val directions: Doc =
   Doc
     .stack(List(north, east, south, west))
     .bracketBy(openBracket, closeBracket)</code></pre>
-<p>In the above, I’ve separated usages of introductions forms from combinators for extra clarity, but remember that referential transparency holds, so you can inline definitions or abstract them out freely. We can keep composing to build more complex programs:</p>
+<p>In the above, I’ve separated usages of introductions forms from
+combinators for extra clarity, but remember that referential
+transparency holds, so you can inline definitions or abstract them out
+freely. We can keep composing to build more complex programs:</p>
 <pre class="scala"><code>val output: Doc = 
   Doc
     .text(&quot;Directions:&quot;)
     .line(directions.indent(2))
     .bracketBy(Doc.space, Doc.space)</code></pre>
-<p>and once we’re done, we can “run” our <code>Doc</code> program by translating it to <code>String</code> via the <code>render</code> elimination form:</p>
+<p>and once we’re done, we can “run” our <code>Doc</code> program by translating it
+to <code>String</code> via the <code>render</code> elimination form:</p>
 <pre class="scala"><code>output.render(width = 30)
 // res0: String = &quot;&quot;&quot; 
 //   Directions:
@@ -335,7 +404,10 @@ output.render(width = 15)
 //     ]
 //  &quot;&quot;&quot;</code></pre>
 <h2 id="the-out-algebra">The Out algebra</h2>
-<p>Let’s now look at a made up algebra we’re going to call <code>Out</code>, whose <em>only</em> capability is to print Strings to stdout. It should provide a first, simple example of encoding behaviour, which is more in line with how we think about the word “program”.</p>
+<p>Let’s now look at a made up algebra we’re going to call <code>Out</code>, whose
+<em>only</em> capability is to print Strings to stdout. It should provide a
+first, simple example of encoding behaviour, which is more in line
+with how we think about the word “program”.</p>
 <p>Here’s how it looks like:</p>
 <pre class="scala"><code>// Carrier type
 Out
@@ -345,7 +417,9 @@ print: String =&gt; Out
 andThen: (Out, Out) =&gt; Out
 // Elimination forms
 run: Out =&gt; IO[Unit]</code></pre>
-<p>except we’re going to assume it’s written idiomatically, with <code>andThen</code> as an instance method and <code>print</code> as a method in the companion object of <code>Out</code>.</p>
+<p>except we’re going to assume it’s written idiomatically, with
+<code>andThen</code> as an instance method and <code>print</code> as a method in the
+companion object of <code>Out</code>.</p>
 <p>Let’s write a program with it:</p>
 <pre class="scala"><code>object Logic {
   val printNewline: Out = Out.print(&quot;\n&quot;)
@@ -364,32 +438,66 @@ object Main extends IOApp.Simple {
 
 // Hello, world!
 // I'm a program!</code></pre>
-<p>So the <code>Out</code> algebra lets us create simple imperative programs that are akin to:</p>
+<p>So the <code>Out</code> algebra lets us create simple imperative programs that
+are akin to:</p>
 <pre class="scala"><code>print(&quot;tea&quot;)
 print(&quot;coffee&quot;)</code></pre>
-<p>except we’re in programs as values, so we can easily write compositional code as programs that manipulate other programs. Here’s a basic example, we will see much more interesting ones once we work with algebras that encode complex control flow:</p>
+<p>except we’re in programs as values, so we can easily write
+compositional code as programs that manipulate other programs.
+Here’s a basic example, we will see much more interesting ones once
+we work with algebras that encode complex control flow:</p>
 <pre class="scala"><code>def repeat(p: Out, n: Int): Out =
   if n &lt;= 0 Out.print(&quot;&quot;)
   else p.andThen(repeat(p, n - 1))</code></pre>
-<p>It’s significant that we can write <code>Out</code> programs without any knowledge of its internal structure: we didn’t do any pattern matching on the concrete case classes that form <code>Out</code>, but only used the operations defined on it, or, in other words, its algebra. This style of <em>algebraic thinking</em> is very valuable, because it scales from datatypes with very simple internal structure, such as <code>Option</code>, all the way to highly sophisticated datatypes such as <code>IO</code> or <code>fs2.Stream</code>.</p>
-<p>Finally, note that there really is no difference in mechanics nor mindset between imperative-looking algebras such as <code>Out</code>, and algebras that encode static data such as <code>Doc</code>. In fact, we can literally implement <code>Out</code> with <code>Doc</code>:</p>
+<p>It’s significant that we can write <code>Out</code> programs without any
+knowledge of its internal structure: we didn’t do any pattern matching
+on the concrete case classes that form <code>Out</code>, but only used the
+operations defined on it, or, in other words, its algebra. This style of
+<em>algebraic thinking</em> is very valuable, because it scales from
+datatypes with very simple internal structure, such as <code>Option</code>, all
+the way to highly sophisticated datatypes such as <code>IO</code> or
+<code>fs2.Stream</code>.</p>
+<p>Finally, note that there really is no difference in mechanics nor
+mindset between imperative-looking algebras such as <code>Out</code>, and
+algebras that encode static data such as <code>Doc</code>. In fact, we can
+literally implement <code>Out</code> with <code>Doc</code>:</p>
 <pre class="scala"><code>type Out = Doc
 def print(s: String): Out = Doc.text(s)
 def andThen(this: Out, that: Out): Out = this + that
 def run(p: Out): IO[Unit] = IO.println(p.render(Int.MaxValue))</code></pre>
 <h2 id="conclusion">Conclusion</h2>
-<p>In this article, we’ve talked about algebras, the fundamental structure at the heart of programs as values. Next time is when things really get interesting, as we’re going to enrich our algebras with the ability to handle <em>outputs</em>. See you then!</p>
+<p>In this article, we’ve talked about algebras, the fundamental
+structure at the heart of programs as values. Next time is when things
+really get interesting, as we’re going to enrich our algebras with the
+ability to handle <em>outputs</em>. See you then!</p>
 <hr />
 <h2 id="appendix-on-terminology">Appendix on terminology</h2>
-<p>Terminology can be a source of confusion, since it’s used loosely and inconsistently and mostly reflects historical connections between fields and communities.</p>
-<p>“Algebra” is a particularly overloaded term: the meaning we used in the article, which also appears in “Boolean algebra” and “Algebraic Data Types”, originates from a branch of Maths called Universal Algebra. It’s defined as:</p>
+<p>Terminology can be a source of confusion, since it’s used loosely and
+inconsistently and mostly reflects historical connections between
+fields and communities.</p>
+<p>“Algebra” is a particularly overloaded term: the meaning we used in
+the article, which also appears in “Boolean algebra” and “Algebraic
+Data Types”, originates from a branch of Maths called Universal
+Algebra.
+It’s defined as:</p>
 <ul>
 <li>A set <code>A</code>, called the carrier.</li>
-<li>Some <em>finitary operations</em> on <code>A</code>: functions that take tuples of elements of <code>A</code> and return an element of <code>A</code>.</li>
+<li>Some <em>finitary operations</em> on <code>A</code>: functions that take tuples of
+elements of <code>A</code> and return an element of <code>A</code>.</li>
 </ul>
-<p>which we called “carrier” and “combinators” respectively. The terms “introduction forms” and “elimination forms” come from logic via type theory instead.</p>
-<p>Universal Algebra also introduces the concept of a signature algebra, or <em>sigma algebra</em>, which defines the set of typed operation symbols without specifying the functions that would be the actual operations. Sigma algebras correspond roughly to the notion of “interface” in programming, and are often encoded in Scala via typeclasses.</p>
-<p>The issue is that FP terminology uses the word “algebra” to also mean “sigma algebra”, for example in the phrase “algebras and interpreters” which roughly corresponds to “abstractions and implementations” (the usage of the word “interpreter” comes from the theory of embedded domain specific languages, or eDSLs).</p>
+<p>which we called “carrier” and “combinators” respectively. The terms
+“introduction forms” and “elimination forms” come from logic via type
+theory instead.</p>
+<p>Universal Algebra also introduces the concept of a <em>signature</em>, which
+defines the set of typed operation symbols without specifying the
+functions that would be the actual operations. Signatures correspond
+roughly to the notion of “interface” in programming, and are often
+encoded in Scala via typeclasses.</p>
+<p>The issue is that FP terminology uses the word “algebra” to also mean
+“signature”, for example in the phrase “algebras and
+interpreters” which roughly corresponds to “abstractions and
+implementations” (the usage of the word “interpreter” comes from the
+theory of embedded domain specific languages, or eDSLs).</p>
                 <hr>
             </div>
         </div>
