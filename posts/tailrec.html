@@ -1,0 +1,708 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <!-- Microsoft Internet Explorer documentMode compatMode setting IE Modus -->
+    <script type="text/javascript">
+        var IE = null;
+        if (window.navigator.appName == "Microsoft Internet Explorer") {
+            if (document.documentMode) {
+
+                IE = document.documentMode;
+            } else {
+
+                IE = 5;
+                if (document.compatMode) {
+                    if (document.compatMode == "CSS1Compat")
+                        IE = 11;
+                }
+            }
+        }
+    </script>
+
+    <meta charset="utf-8">
+    <!-- X-UA -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <link rel="author" title="Fabio Labella" href="SystemFw" />
+
+
+
+    <meta name="google" content="notranslate" />
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- index ROBOTS follow -->
+    <meta name="robots" content="index, follow" />
+    <!-- Site Desciption -->
+    
+    <meta name="description" content="SystemFw FP blog">
+    
+
+    <meta name="keywords" content="Fabio Labella, SystemFw, Functional Programming, Haskell, Scala">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="../static/img/avatar.jpg" type="image/jpeg-icon" />
+
+    <!-- Blog Title -->
+    
+    <title>Deriving Tail Recursive Fibonacci</title>
+    
+
+    <!-- Property Metas -->
+    <meta property="og:image" content="static/img/ix.png" />
+    
+    <meta property="og:title" content="SystemFw FP blog" />
+    <meta property="og:site_name" content="SystemFw FP blog" />
+    
+
+    <!-- Canonical -->
+    <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">
+
+    <!-- StyleSheet -->
+    <link rel="stylesheet" href="../static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/spaceg.stylesheets.css">
+    <link rel="stylesheet" href="../static/css/syntax.css">
+
+    <!-- Syntax highlighting -->
+    
+    <link rel="stylesheet" href="../static/highlight/styles/zenburn.css">
+    <script src="../static/highlight/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic,900,900italic" rel="stylesheet" type="text/css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Playfair+Display:400,700,900,400italic,700italic,900italic" rel="stylesheet" type="text/css">
+    <!-- -->
+
+    <style>
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fff;
+            /* change if the mask should have another color then white */
+            z-index: 99;
+            /* makes sure it stays on top */
+        }
+
+        #status {
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            left: 50%;
+            /* centers the loading animation horizontally one the screen */
+            top: 50%;
+            /* centers the loading animation vertically one the screen */
+            background-image: url("/static/img/preloader.gif");
+            /* path to your loading animation */
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: -100px 0 0 -100px;
+            /* is width and height divided by two */
+        }
+
+        ul,
+        ol {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .navbar-inverse {
+            background-color: #FFF;
+            border-color: #FFFFFF;
+        }
+    </style>
+    <style>
+        header.intro-header {
+            background: #6f5499;
+            background: no-repeat center center;
+            background-attachment: scroll;
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            background-size: cover;
+            -o-background-size: cover;
+        }
+
+        /* Preloader */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fff;
+            /* change if the mask should have another color then white */
+            z-index: 99;
+            /* makes sure it stays on top */
+        }
+
+        #status {
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            left: 50%;
+            /* centers the loading animation horizontally one the screen */
+            top: 50%;
+            /* centers the loading animation vertically one the screen */
+            background-image: ;
+            /* path to your loading animation */
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: -100px 0 0 -100px;
+            /* is width and height divided by two */
+        }
+
+        li {
+            list-style: none;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+            padding-right: 0px;
+        }
+
+        article li {
+            list-style: inherit;
+        }
+
+        article .figure {
+            text-align: center
+        }
+    </style>
+    <!-- end Loading front stylesheet here -->
+</head>
+
+
+<body>
+    <div id="preloader">
+        <div id="status">
+
+        </div>
+
+    </div>
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="\" id="blog-title-left-top">SystemFw</a>
+        </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="../about.html" target="_blank">About</a></li>
+            <li><a href="../archive.html">Posts</a></li>
+            <li><a href="../writings.html">Writings</a></li>
+            <li><a href="../talks.html">Talks</a></li>
+            <li><a href="https://www.github.com/SystemFw" id="roundbutton" target="_blank"><i class="fa fa-github"></i>Projects</a></li>
+          </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+
+    <div id="content">
+        <header class="title-header" alt title>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Deriving Tail Recursive Fibonacci</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Page Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <h2 id="introduction">Introduction</h2>
+<p>One of the cornerstones of Functional Programming is the use of
+<em>structural recursion</em>: writing functions that are <em>recursive</em> (they
+call themselves) and that model the recursion after the structure of
+the data they are operating on.</p>
+<p>For example, given the standard <code>Cons</code> list:</p>
+<pre class="scala"><code>sealed trait List[+A]
+case class Cons[+A](head: A, tail: List[A]) extends List[A]
+case object Nil extends List[Nothing]</code></pre>
+<p>we can write a <code>length</code> function using structural recursion:</p>
+<pre class="scala"><code>def length[A](list: List[A]): Int =
+  list match {
+    case Nil =&gt; 0
+    case Cons(_, tail) =&gt; 1 + length(tail)
+  }</code></pre>
+<p>Most introductory material will then explain how certain functions are
+<em>tail-recursive</em> if and only if the recursive call is in <em>tail
+position</em> , or in other words if and only if they call themselves
+recursively as their final action.</p>
+<p>Note that looks can be deceiving: although <em>visually</em> it looks like
+the recursive call in our <code>length</code> function above is in tail position,
+it is not, as we can see when we expand the execution trace of its
+recursive case:</p>
+<pre class="scala"><code>case Cons(_, tail) =&gt; 1 + length(tail)
+// is evaluated like:
+val a = 1
+val b = length(tail) // not in tail position!
+a + b</code></pre>
+<p>Instead, a tail-recursive <code>length</code> looks like this:</p>
+<pre class="scala"><code>def length[A](list: List[A], acc: Int = 0): Int =
+  list match {
+    case Nil =&gt; acc
+    case Cons(_, tail) =&gt; length(tail, acc + 1)
+  }</code></pre>
+<p>Tail-recursive functions tend to be less obvious for most people than
+their structural counterpart, so you might be wondering whether
+learning how to write them is worth the effort.</p>
+<p>Well, there are at least of couple of good, practical reasons:</p>
+<ol type="1">
+<li>The Scala compiler can run tail recursive functions in constant
+stack space, without incurring a <code>StackOverflowException</code> if the
+recursion is too deep.</li>
+<li>Some functions, when written with structural recursion, exhibit
+exponential complexity and are therefore prohibitively slow, and they
+can be made to run in linear time written with tail-recursion.</li>
+</ol>
+<p>…but I have to be honest, if those were the only reasons, I probably
+wouldn’t bother writing a post about it.</p>
+<p>Instead, I believe the main reason tail-recursion is worth learning is
+because the shape of tail-recursive functions forces us to focus on
+the <em>essential state</em> needed to perform a certain computation, and
+the usefulness of identifying essential state extends far beyond just
+Functional Programming. For example, it is crucial in my day job when
+dealing with concurrent and distributed algorithms.</p>
+<p>This post is divided into two parts: Part I will show a recipe to
+derive tail-recursive functions via <em>algebraic manipulation</em>, which is
+very useful if you know the recursive structure of your computation,
+but struggle to express it in tail-recursive terms. Part II will
+instead show an alternative method which focuses on <em>state</em>, and gets
+us closer to the skillset needed to model imperative, and ultimately
+concurrent and distributed computations.</p>
+<h2 id="naive-fibonacci">Naive Fibonacci</h2>
+<p>The running example for this post will be a function to compute the
+<code>N-th</code> number of the Fibonacci sequence:</p>
+<blockquote>
+<p>0, 1, 1, 2, 3, 5, 8, 13, 21, …</p>
+</blockquote>
+<p>which is described by the following <em>recurrence relation</em>:</p>
+<blockquote>
+<p>F(0) = 0<br />
+F(1) = 1<br />
+F(n) = F(n - 1) + F(n - 2)</p>
+</blockquote>
+<p>We can easily translate that into Scala via structural recursion,
+noting that it has two base cases, and that we will pretend that
+Scala’s <code>Int</code> cannot be negative:</p>
+<pre class="scala"><code>def fib(n: Int): Int =
+ n match {
+   case 0 =&gt; 0
+   case 1 =&gt; 1
+   case n =&gt; fib(n - 1) + fib(n - 2)
+ }</code></pre>
+<p>Fibonacci is often used as a motivating example to learn
+tail recursion because the version we’ve just written is exponential,
+and starts getting pretty slow as we increase <code>n</code>.</p>
+<p>So, tail recursion to the rescue!</p>
+<h2 id="part-i-algebraic-derivation">Part I: Algebraic Derivation</h2>
+<p>Let’s start from the naive fibonacci:</p>
+<pre class="scala"><code>def fib(n: Int) = n match {
+  case 0 =&gt; 0
+  case 1 =&gt; 1
+  case n =&gt;
+   def go(): Int = ???
+   ???
+}</code></pre>
+<p>As you can see, we have left the recursive case unspecified, and
+instead introduced a helper function called <code>go</code>, which is where all
+the actual recursion is going to happen.
+This is a very common style since tail-recursive functions tend to
+need additional parameters, which are hidden by the helper function.</p>
+<p>In particular, each component of the recursive definition becomes a
+parameter, so with the recurrence relation:</p>
+<blockquote>
+<p>F(n) = F(n - 1) + F(n - 2)</p>
+</blockquote>
+<p>we will have parameters for <code>n</code>, <code>F(n)</code>, <code>F(n - 1)</code>, and <code>F(n - 2)</code>.</p>
+<p>We can find appropriate names for these parameters by putting them on
+a number line in order:</p>
+<pre class="shell"><code>         F(n - 2)        F(n - 1)          F(n)            n
+-------------|---------------|---------------|-------------&gt; 
+        secondLast         last          current        counter</code></pre>
+<p>which means our function becomes:</p>
+<pre class="scala"><code>def fib(n: Int) = n match {
+  case 0 =&gt; 0
+  case 1 =&gt; 1
+  case n =&gt;
+   def go(secondLast: Int, last: Int, current: Int, counter: Int): Int = ???
+   ???
+}</code></pre>
+<p>In order to call <code>go</code>, we need to find appropriate initial values for
+its arguments: the initial value for <code>counter</code> is 2, because
+iterations 0 and 1 are already covered by the base cases.
+Then, the other params are given by the Fibonacci series up to iteration 2:</p>
+<blockquote>
+<p>0, 1, 1, …</p>
+</blockquote>
+<p>so:</p>
+<pre class="scala"><code>def fib(n: Int) = n match {
+  case 0 =&gt; 0
+  case 1 =&gt; 1
+  case n =&gt;
+   def go(secondLast: Int, last: Int, current: Int, counter: Int): Int = ???
+   go(secondLast = 0, last = 1, current = 1, counter = 2)
+}</code></pre>
+<p>Now let’s write <code>go</code>. Our <code>fib</code> function has to return the value of
+the Fibonacci sequence at iteration <code>n</code>, or in other words, the
+<code>current</code> value if <code>counter</code> is equal to <code>n</code>.</p>
+<p>If <code>counter</code> is not at <code>n</code>, then we advance, so <code>last</code> becomes
+<code>secondLast</code>, <code>current</code> becomes <code>last</code>, and we compute the next value
+of <code>current</code> with the definition of Fibonacci, which says the
+<code>current</code> Fibonacci number is equal to the sum of the <code>last</code> and
+<code>secondLast</code> Fibonacci numbers.</p>
+<p>Note that because we have replaced recursive components with arguments
+to <code>go</code>, we can compute the next value of <code>current</code> without any
+recursion, we only need to recur in tail position by passing the
+updated arguments to <code>go</code>:</p>
+<pre class="scala"><code>def fib(n: Int) = n match {
+  case 0 =&gt; 0
+  case 1 =&gt; 1
+  case n =&gt;
+   def go(secondLast: Int, last: Int, current: Int, counter: Int): Int =
+     if (counter == n) current
+     else {
+       val counterNext = counter + 1
+       val secondLastNext = last // we move to the right
+       val lastNext = current // we move to the right
+       val currentNext = lastNext + secondLastNext // definition of Fibonacci
+       go(
+        secondLast = secondLastNext,
+        last = lastNext,
+        current = currentNext,
+        counter = counterNext
+       )
+     }
+
+   go(secondLast = 0, last = 1, current = 1, counter = 2)
+}</code></pre>
+<p>and we’re done! We can apply several transformations to considerably
+simplify this function, but before we do that, let’s recap the two
+ideas we’ve used to write tail-recursive functions:</p>
+<ul>
+<li>Every component of the recursive definition becomes an argument to a
+recursive helper.</li>
+<li>At the end of the recursion, one of the arguments will hold the
+final result.</li>
+</ul>
+<p>One final observation is that the recursion is no longer <em>structural</em>,
+i.e. the fact that the <code>current</code> Fibonacci number is defined
+recursively no longer corresponds to recursion in code. Instead, the
+logical recursion corresponds to state updates, and the recursion in
+code is only used to iterate our state transformations until we reach
+the desired results. This is the reason why the recursive call can be
+in tail position, but I dare say the link between recursive
+definitions and state is a far more interesting aspect of this type of
+function than the use of tail recursion in itself.</p>
+<h3 id="simplification">Simplification</h3>
+<p>Ok, now onto simplifying our implementation: the first transformation
+we can apply is <em>inlining</em>, i.e. replacing each name with its
+definition.This is safe to do because even though the algorithm is
+conceptually evolving variables, it’s expressed as immutable
+transformations for which inlining can always be done without changing
+behaviour. As an example:</p>
+<pre class="scala"><code>go(..., currentNext, ...)
+// but:
+currentNext = lastNext + secondLastNext
+// so:
+go(..., lastNext + secondLastNext, ...)
+// but:
+lastNext = current
+secondLastNext = last
+// so:
+go(..., current + last, ...)</code></pre>
+<p>Let’s inline all the definitions in <code>go</code>:</p>
+<pre class="scala"><code>def fib(n: Int) = n match {
+  case 0 =&gt; 0
+  case 1 =&gt; 1
+  case n =&gt;
+   def go(secondLast: Int, last: Int, current: Int, counter: Int): Int =
+     if (counter == n) current
+     else 
+       go(
+        secondLast = last,
+        last = current,
+        current = current + last,
+        counter = counter + 1,
+       )
+   
+   go(secondLast = 0, last = 1, current = 1, counter = 2)
+}</code></pre>
+<p>but now we notice that <code>secondLast</code> is redundant, because it’s updated
+but never actually used to compute <code>current</code>: <code>current</code> is updated via
+<code>current + last</code>, and <code>last</code> doesn’t depend on <code>secondLast</code>.</p>
+<p>So we can eliminate it to get to:</p>
+<pre class="scala"><code>def fib(n: Int) = n match {
+  case 0 =&gt; 0
+  case 1 =&gt; 1
+  case n =&gt;
+   def go(last: Int, current: Int, counter: Int): Int =
+     if (counter == n) current
+     else 
+       go(
+        last = current,
+        current = current + last
+        counter = counter + 1
+       )
+
+   go(last = 1, current = 1, counter = 2)
+}</code></pre>
+<p>Now let’s eliminate the named arguments, and hoist <code>go</code> at the top.
+It’s tail recursive, and we can make sure by adding the <code>tailrec</code>
+annotation:</p>
+<pre class="scala"><code>import annotation.tailrec
+
+def fib(n: Int) = {
+  @tailrec
+  def go(last: Int, current: Int, counter: Int): Int =
+    if (counter == n) current 
+    else go(current, current + last, counter + 1)
+
+  n match {
+    case 0 =&gt; 0
+    case 1 =&gt; 1
+    case n =&gt; go(1, 1, 2)
+  }
+}</code></pre>
+<p>Finally, we can see that the pattern matching has redundant logic in
+the first two cases, and doesn’t use the pattern in the third, so we
+can replace it with an <code>if</code>. This is our final version:</p>
+<pre class="scala"><code>import annotation.tailrec
+
+def fib(n: Int) = {
+  @tailrec
+  def go(last: Int, current: Int, counter: Int): Int =
+    if (counter == n) current 
+    else go(current, current + last, counter + 1)
+
+  if (n &lt;= 1) n else go(1, 1, 2)
+}</code></pre>
+<h2 id="part-ii-operational-derivation">Part II: Operational Derivation</h2>
+<p>The derivation above used a lot of equational thinking, but often with
+tail recursion we can adopt a more operational mindset.</p>
+<p>In fact, tail recursion can be understood as a translation from
+mutable state algorithms, one where imperative thinking is more
+explicit than in most imperative languages, in that for each variable
+<code>x</code> you distinguish <code>x</code> from its updated version <code>x'</code> (due to
+immutability), and you loop via a restricted <code>GOTO</code> (the recursive
+call) instead of using <code>while</code>.</p>
+<p>So, let’s look at the recurrence relation again:</p>
+<blockquote>
+<p>F(0) = 0<br />
+F(1) = 1<br />
+F(n) = F(n - 1) + F(n - 2)</p>
+</blockquote>
+<p>This time, we start by recognising that the first two cases can be
+done with an <code>if</code>, and then we know there is going to be some
+iteration in the recursive case, which we can represent with a helper.
+At this point, the only information we have about the helper is its
+return type:</p>
+<pre class="scala"><code>def fib(n: Int) = {
+  def go(): Int = go()
+  if (n &lt;= 1) n else go()
+}</code></pre>
+<p>The guiding principle when deriving tail-recursive functions via
+operational thinking is figuring out which state you need to keep
+track of, and add each piece of state as a parameter.
+Tail recursive helpers have to return a result which is updated
+during the iteration, so we can start by keeping track of that.</p>
+<pre class="scala"><code>def fib(n: Int) = {
+  def go(result: Int): Int = go(result)
+  if (n &lt;= 1) n else go(???)
+}</code></pre>
+<p>To call <code>go</code>, we need to figure out the initial value of <code>result</code>. We
+know that the <code>if</code> returns the result of <code>fib(n)</code> when <code>n == 0</code> and <code>n == 1</code>, so the initial value of <code>result</code> is <code>fib(n)</code> when <code>n == 2</code>,
+which is 1, as per:</p>
+<blockquote>
+<p>0, 1, 1, …</p>
+</blockquote>
+<pre class="scala"><code>def fib(n: Int) = {
+   def go(result: Int): Int = go(result)
+   if (n &lt;= 1) n else go(1)
+}</code></pre>
+<p>Next, we have to figure out when it is possible to return <code>result</code>,
+i.e. a <em>termination condition</em>. Sometimes this can be done as a
+predicate on <code>result</code> without any additional state, but in this case
+the result has to be returned once we reach the <code>n-th</code> iteration,
+which means we have to add a <code>counter: Int</code> parameter to keep track of
+which iteration we’re in.</p>
+<p>Because the <code>if</code> covers iterations 0 and 1, so the initial value of
+<code>counter</code> will be 2:</p>
+<pre class="scala"><code>def fib(n: Int) = {
+  def go(result: Int, counter: Int): Int =
+    if (counter == n) result
+    else go(result, counter)
+  if (n &lt;= 1) n else go(result = 1, counter = 2)
+}</code></pre>
+<p>Now that we have some state with initial values, we have to figure out
+how to update it before recurring:</p>
+<pre class="scala"><code>def fib(n: Int) = {
+  def go(result: Int, counter: Int): Int =
+    if (counter == n) result
+    else {
+      val counterNext = counter + 1
+      val resultNext = ???
+      go(resultNext, counterNext)
+    }
+  if (n &lt;= 1) n else go(result = 1, counter = 2)
+}</code></pre>
+<p>Updating <code>counter</code> is trivial, but we don’t know what <code>resultNext</code>
+should be. Well, according to the definition of Fibonacci, it’s the
+sum of <code>fib(n - 1)</code> and <code>fib(n - 2)</code>, and we already have <code>fib(n - 1)</code>, it’s <code>result</code>!</p>
+<p>To see why, consider that <code>resultNext</code> is the <code>result</code>, i.e. the
+<code>fib(n)</code>, of the <em>next</em> iteration, which means that <code>fib(n - 1)</code> is
+the previous value from the point of view of the next iteration, i.e
+the <code>result</code> of the current iteration. Let’s update the code:</p>
+<pre class="scala"><code>def fib(n: Int) = {
+  def go(result: Int, counter: Int): Int =
+    if (counter == n) result
+    else {
+      val counterNext = counter + 1
+      val resultNext = result + ???
+      go(resultNext, counterNext)
+    }
+  if (n &lt;= 1) n else go(result = 1, counter = 2)
+}</code></pre>
+<p>However, we simply cannot compute <code>fib(n - 2)</code>, which means we are
+missing a parameter to track it, let’s call it <code>last: Int</code>.
+Understanding why this is the <code>last</code> value can be a bit tricky, but
+it’s the same idea as before: we need <code>fib(n - 2)</code> in the <em>next</em>
+iteration, which means we need <code>fib(n - 1)</code> in this iteration, i.e.
+the last value.</p>
+<p>Now, <code>last</code> is going to need an initial value, and it’s also going to
+need to be updated on each iteration before the recursive call.
+Let’s start with the initial value, which is straightforward: we need
+<code>fib(n - 1)</code> when <code>counter == 2</code>, which is 1.
+The updated <code>lastNext</code> value represents, once again, the previous
+result from the point of view of the <em>next</em> iteration, i.e. the
+<code>result</code> of the current iteration.</p>
+<p>So we have:</p>
+<pre class="scala"><code>def fib(n: Int) = {
+  def go(result: Int, counter: Int, last: Int): Int =
+    if (counter == n) result
+    else {
+      val counterNext = counter + 1
+      val resultNext = result + last
+      val lastNext = result
+      go(resultNext, counterNext, lastNext)
+    }
+  if (n &lt;= 1) n else go(result = 1, counter = 2, last = 1)
+}</code></pre>
+<p>And let’s apply the same refactoring as in Part I:</p>
+<pre class="scala"><code>import annotation.tailrec
+
+def fib(n: Int) = {
+  @tailrec
+  def go(result: Int, counter: Int, last: Int): Int =
+    if (counter == n) result
+    else go(result + last, counter + 1, result)
+
+  if (n &lt;= 1) n else go(1, 2, 1)
+}</code></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>Although most didactic material covers the idea of tail recursion,
+actually <em>writing</em> tail-recursive functions is often left as an
+exercise to the reader.</p>
+<p>This is a shame because, far from just being an optimisation, tail
+recursion is actually great at expressing tricky stateful logic, and
+really teaches us to think about state methodically.</p>
+<p>So, tail recurse more, and see you next time!</p>
+                <hr>
+            </div>
+        </div>
+    </div>
+</article>
+
+    </div>
+    <div id="footer">
+    </div>
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <!-- <li> -->
+                    <!--     <a href="feed.xml" data-datatype="json" data-type="GET" data-target="#frame" class="reload" id="clickme"> -->
+                    <!--         <span class="fa-stack fa-lg"> -->
+                    <!--             <i class="fa fa-circle fa-stack-2x"></i> -->
+                    <!--             <i class="fa fa-rss fa-stack-1x fa-inverse"></i> -->
+                    <!--         </span> -->
+                    <!--     </a> -->
+                    <!-- </li> -->
+                    
+                    <li>
+                        <a href="https://github.com/SystemFw" target="_blank">
+                            <span class="fa-stack fa-lg">
+
+                                <i class="fa fa-arrow-circle-o-down"></i>
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a href="https://linkedin.com/in/fabiolabella" target="_blank">
+                            <span class="fa-stack fa-lg">
+
+                                <i class="fa fa-arrow-circle-o-down"></i>
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Fabio Labella 2019. <br><br>
+                </p>
+                <div class="col-md-12">
+                  <p class="copyright text-muted">
+                    Site generated by
+                    <a href="http://jaspervdj.be/hakyll" target="_blank">Hakyll</a>.
+                    Theme designed by
+                    <a href="https://github.com/katychuang" target="_blank">Katy Chuang</a>
+                    and can be found
+                    <a href="http://katychuang.com/hakyll-cssgarden/gallery/" target="_blank">here.</a>
+                  </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="../static/js/jquery.min.js"></script>
+<script src="../static/js/spaceg.stylesheets.min.js"></script>
+<script src="../static/js/bootstrap.min.js"></script>
+<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+<script src="../static/js/scripts.js"></script>
+
+</body>
+
+</html>
