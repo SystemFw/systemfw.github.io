@@ -1,0 +1,850 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <!-- Microsoft Internet Explorer documentMode compatMode setting IE Modus -->
+    <script type="text/javascript">
+        var IE = null;
+        if (window.navigator.appName == "Microsoft Internet Explorer") {
+            if (document.documentMode) {
+
+                IE = document.documentMode;
+            } else {
+
+                IE = 5;
+                if (document.compatMode) {
+                    if (document.compatMode == "CSS1Compat")
+                        IE = 11;
+                }
+            }
+        }
+    </script>
+
+    <meta charset="utf-8">
+    <!-- X-UA -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <link rel="author" title="Fabio Labella" href="SystemFw" />
+
+
+
+    <meta name="google" content="notranslate" />
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- index ROBOTS follow -->
+    <meta name="robots" content="index, follow" />
+    <!-- Site Desciption -->
+    
+    <meta name="description" content="SystemFw FP blog">
+    
+
+    <meta name="keywords" content="Fabio Labella, SystemFw, Functional Programming, Haskell, Scala">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="../static/img/avatar.jpg" type="image/jpeg-icon" />
+
+    <!-- Blog Title -->
+    
+    <title>OOP vs Data Oriented Design...in a distributed FP language</title>
+    
+
+    <!-- Property Metas -->
+    <meta property="og:image" content="static/img/ix.png" />
+    
+    <meta property="og:title" content="SystemFw FP blog" />
+    <meta property="og:site_name" content="SystemFw FP blog" />
+    
+
+    <!-- Canonical -->
+    <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">
+
+    <!-- StyleSheet -->
+    <link rel="stylesheet" href="../static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/spaceg.stylesheets.css">
+    <link rel="stylesheet" href="../static/css/syntax.css">
+
+    <!-- Syntax highlighting -->
+    
+    <link rel="stylesheet" href="../static/highlight/styles/zenburn.css">
+    <script src="../static/highlight/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic,900,900italic" rel="stylesheet" type="text/css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Playfair+Display:400,700,900,400italic,700italic,900italic" rel="stylesheet" type="text/css">
+    <!-- -->
+
+    <style>
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fff;
+            /* change if the mask should have another color then white */
+            z-index: 99;
+            /* makes sure it stays on top */
+        }
+
+        #status {
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            left: 50%;
+            /* centers the loading animation horizontally one the screen */
+            top: 50%;
+            /* centers the loading animation vertically one the screen */
+            background-image: url("/static/img/preloader.gif");
+            /* path to your loading animation */
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: -100px 0 0 -100px;
+            /* is width and height divided by two */
+        }
+
+        ul,
+        ol {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .navbar-inverse {
+            background-color: #FFF;
+            border-color: #FFFFFF;
+        }
+    </style>
+    <style>
+        header.intro-header {
+            background: #6f5499;
+            background: no-repeat center center;
+            background-attachment: scroll;
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            background-size: cover;
+            -o-background-size: cover;
+        }
+
+        /* Preloader */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fff;
+            /* change if the mask should have another color then white */
+            z-index: 99;
+            /* makes sure it stays on top */
+        }
+
+        #status {
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            left: 50%;
+            /* centers the loading animation horizontally one the screen */
+            top: 50%;
+            /* centers the loading animation vertically one the screen */
+            background-image: ;
+            /* path to your loading animation */
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: -100px 0 0 -100px;
+            /* is width and height divided by two */
+        }
+
+        li {
+            list-style: none;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+            padding-right: 0px;
+        }
+
+        article li {
+            list-style: inherit;
+        }
+
+        article .figure {
+            text-align: center
+        }
+    </style>
+    <!-- end Loading front stylesheet here -->
+</head>
+
+
+<body>
+    <div id="preloader">
+        <div id="status">
+
+        </div>
+
+    </div>
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="\" id="blog-title-left-top">SystemFw</a>
+        </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="../about.html" target="_blank">About</a></li>
+            <li><a href="../archive.html">Posts</a></li>
+            <li><a href="../writings.html">Writings</a></li>
+            <li><a href="../talks.html">Talks</a></li>
+            <li><a href="https://www.github.com/SystemFw" id="roundbutton" target="_blank"><i class="fa fa-github"></i>Projects</a></li>
+          </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+
+    <div id="content">
+        <header class="title-header" alt title>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>OOP vs Data Oriented Design...in a distributed FP language</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Page Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <p>It is often said that “Learning <em>x</em> will make you a better
+programmer”, for various values of <em>x</em>.<br />
+In my experience the secret to making that true lies not so much in
+the choice of a given <em>x</em>, but rather in the ability to apply ideas
+from <em>x</em> to <em>y</em>, and then getting exposure to a wide range of
+such ideas.</p>
+<p>This post aims to show a fully worked example of this process: we will
+look at a problem involving distributed transactions in a very high
+level functional language, and solve it with a technique used to
+rearchitect object oriented code in the presence of manual memory
+management. Let’s dive in.</p>
+<h2 id="intro-distributed-transactions-in-unison">Intro: distributed transactions in Unison</h2>
+<p>My day job involves designing and implementing distributed systems for
+<a href="unison.cloud">Unison Cloud</a>, the next-gen cloud platform we’re
+building on top of the <a href="unison-lang.org">Unison</a> language.</p>
+<p>A unique characteristic of our cloud is the power to manipulate
+persistent and transactional storage as if it was an in-memory data
+structure, via a set of <em>abilities</em> : Unison’s take on algebraic
+effects that can express custom control flow abstractions as ordinary
+straight-line code.</p>
+<p>The model is fairly simple: you write programs in the <code>Transaction</code>
+ability that operate on one or more typed key-value tables, and call
+<code>transact</code> to delimit a transactional boundary, which will require the
+<code>Storage</code> ability.</p>
+<pre class="haskell"><code>type Table k v = Table Text
+
+ability Transaction where
+  write.tx : Table k v -&gt; k -&gt; v -&gt;{Transaction} ()
+  tryRead.tx : Table k v -&gt; k -&gt;{Transaction} Optional v
+  delete.tx : Table k v -&gt; k -&gt;{Transaction} ()
+
+-- like tryRead.tx, but fails on key not found
+read.tx: Table k v -&gt; k -&gt;{Transaction, Exception} v
+
+transact : Database -&gt; '{Transaction, Exception, Random} a -&gt;{Exception, Storage} a</code></pre>
+<p>As a quick syntax primer, <code>a -&gt; b -&gt;{g} c</code> is a function from <code>a</code> and
+<code>b</code> to <code>c</code> that performs effects defined by the <code>g</code> ability, <code>'{g} a</code>
+is syntactic sugar for the type of the thunk <code>() -&gt;{g} a</code>, and lower
+case letters in type signatures indicate generic type parameters.
+Function calls are just whitespace (<code>f a b</code>), <code>do ...</code> is syntactic
+sugar for thunks <code>_ -&gt; ...</code>, and <code>|&gt;</code> creates function pipelines.</p>
+<p>Here’s the canonical bank transfer example, Bob sends 10 pounds
+(represented as pennies) to Alice:</p>
+<pre class="haskell"><code>type UserId = UserId Text
+
+-- populated with data elsewhere
+accounts: Table UserId Nat
+accounts = Table &quot;accounts&quot;
+
+transfer: Database -&gt;{Exception, Storage} ()
+transfer db = 
+  bob = UserId &quot;Bob&quot;
+  alice = UserId &quot;Alice&quot;
+  transact db do
+    from = read.tx accounts bob
+    to = read.tx accounts alice
+    amount = 10 * 100
+    if from &gt;= amount
+    then 
+      write.tx accounts bob (from - amount) 
+      write.tx accounts alice (to + amount)
+    else 
+      Exception.raiseGeneric &quot;insufficient balance&quot; (bob, from)
+
+-- no infra needed to run code on cloud!
+Cloud.run do
+  db = Database.default()
+  -- `submit` accepts thunks with the Storage ability
+  Cloud.submit Environment.default() do 
+    transfer db</code></pre>
+<p>The code snippet above runs <code>transfer</code> on Unison Cloud, where the data
+is persisted on our distributed storage, and the implementation of
+<code>transact</code> guarantees that the transaction executes atomically.</p>
+<h3 id="data-structures">Data structures</h3>
+<p>Transactions on typed key-value tables are a flexible building block,
+and we can build data structures like we do for in-memory data.</p>
+<p>Let’s build a <code>Counter</code>:</p>
+<pre class="haskell"><code>type Counter = Counter (Table () Nat)
+
+Counter.named: Text -&gt; Counter
+Counter.named name = Counter (Table name)</code></pre>
+<p>The idea is that we can represent the state of the counter in a table
+with a single key of the unit type <code>()</code> . Just like any other other
+data structure, we can write functions that operate on our <code>Counter</code>,
+using the <code>Transaction</code> ability to retain atomicity:</p>
+<pre class="haskell"><code>Counter.getAndIncrement: Counter -&gt;{Transaction} Nat
+Counter.getAndIncrement counter =
+  (Counter state) = counter
+  n = tryRead.tx state () |&gt; Optional.getOrElse 0
+  write.tx state () (n + 1)
+  n</code></pre>
+<p>We can use our <code>Counter</code> to build an append-only log, similar to a
+Kafka partition, by pairing a <code>Counter</code> with a <code>Table Nat a</code>. The
+<code>Counter</code> will keep track of the current size of the log so we know
+where to append next, and the table will host the elements, indexed by
+their offset.</p>
+<pre class="haskell"><code>type Log a = Log Counter (Table Nat a)
+
+Log.named: Text -&gt; Log a
+Log.named name = Log (Counter.named (name ++ &quot;-size&quot;)) (Table name)</code></pre>
+<p>Reading an element from the log is straightforward:</p>
+<pre class="haskell"><code>Log.at : Nat -&gt; Log a -&gt;{Transaction} Optional a
+Log.at n log =
+  (Log _ elems) = log
+  tryRead.tx elems n</code></pre>
+<p>Appending to the log is slightly more involved but still pretty easy:</p>
+<pre class="haskell"><code>Log.append: a -&gt; Log a -&gt;{Transaction} ()
+Log.append v log =
+  (Log size elems) = log
+  n = getAndIncrement size
+  write.tx elems n v</code></pre>
+<p>note that <code>size</code> and <code>elems</code> cannot go out of sync since we’re still
+in the <code>Transaction</code> ability.</p>
+<p>A call to <code>Log.append</code> executes atomically when we call <code>transact</code>:</p>
+<pre class="haskell"><code>type Track = Track Text
+
+playlist: Log 
+playlist = Log.named &quot;my-playlist&quot;
+
+transact myDb do
+  playlist |&gt; append (Track &quot;Obstacles&quot;)</code></pre>
+<p>and we can append multiple elements atomically as well:</p>
+<pre class="haskell"><code>transact myDb do
+  playlist |&gt; append (Track &quot;Sea above, sky below&quot;)
+  playlist |&gt; append (Track &quot;Featherweight&quot;)</code></pre>
+<p>Let’s conclude this section with a couple of notes on semantics that
+will be useful later.</p>
+<p>The first is that the <code>Table</code> constructor, and by extension
+<code>Counter.named</code> and <code>Log.named</code>, don’t actually create anything in
+storage there and then. A <code>Table</code> is just a logical handle, all the
+action happens during <code>transact</code>, which takes the actual <code>Database</code> we
+will modify. This is actually guaranteed by the types too:
+<code>Counter.named</code> and <code>Log.named</code> don’t advertise any abilities, which
+means that they have no side-effects.</p>
+<p>The second is about the execution model of transactions, to help us
+reason about performance. The implementation of <code>transact</code> uses
+Optimistic Concurrency Control, which means that the first read of
+each key goes to storage, whilst writes (and reads to keys that have
+been written to) are buffered in memory. When the transaction completes,
+<code>transact</code> will try to atomically commit all the writes to storage at
+once. If there is a conflict, it retries the whole transaction, which
+it can do because the Unison type system guarantees that the thunk
+passed to <code>transact</code> doesn’t perform any other effects that wouldn’t
+be safe to retry arbitrarily (like an HTTP call).</p>
+<h2 id="case-study-stream-storage">Case study: stream storage</h2>
+<p>We can now look at the problem this post will be centred around, which
+is a simplified version of something I’ve encounted while developing
+<a href="https://share.unison-lang.org/@systemfw/volturno/code/main/latest">volturno</a>,
+a distributed stream processing framework (think Kafka + Flink).</p>
+<p>Imagine we need to design the storage layer for keyed data streams.
+For our toy version, we can go with something like this:</p>
+<pre class="haskell"><code>type Key
+type Event
+
+streams: Table Key (Log Event)</code></pre>
+<p>where we basically store a log of events for each key (the real code
+uses sharding, but we will keep the simpler version above in this
+post).</p>
+<p>We want to implement a function to publish a batch of events to our
+<code>streams</code> <code>Table</code>:</p>
+<pre class="haskell"><code>publish: Database -&gt; [(Key, Event)] -&gt;{Remote} ()</code></pre>
+<p><code>Remote</code> is the ambient ability in Unison Cloud, it’s very powerful
+but we won’t cover it here for space reasons, just know that we can
+call <code>toRemote</code> to embed other cloud abilities in it, like <code>Storage</code>,
+<code>Exception</code> or <code>Random</code>.</p>
+<p>Ok, let’s plan the implementation out. We need to start by grouping
+the batch of events by key, which we can do with:</p>
+<pre class="haskell"><code>List.groupMap : (a -&gt; k) -&gt; (a -&gt; v) -&gt; [a] -&gt; Map k (List.Nonempty v)</code></pre>
+<p>We then want to upload batches of events for different keys in parallel,
+let’s use <code>Remote.parMap</code>:</p>
+<pre class="haskell"><code>Remote.parMap : (a -&gt;{Remote} t) -&gt; [a] -&gt;{Remote} [t]</code></pre>
+<p>At this point we will be dealing with batches of events for a single
+key that have to be appended sequentially, so we can have a
+transaction that fetches the relevant <code>Log</code> and iterates through the
+keyed batch to append the events.</p>
+<p>Here’s the full code. Note the use of the <code>cases</code> keyword to pattern
+match on the <code>(key, events)</code> tuple in a lambda:</p>
+<pre class="haskell"><code>publish: Database -&gt; [(Key, Event)] -&gt;{Remote} ()
+publish db messages = 
+  messages
+    |&gt; List.groupMap at1 at2
+    |&gt; Map.toList
+    |&gt; Remote.parMap cases (key, events) -&gt;
+         toRemote do publishKey db key (toList events)
+    |&gt; ignore
+    
+publishKey: Database -&gt; Key -&gt; [Event] -&gt;{Storage, Exception} ()
+publishKey db key events =
+  transact db do
+    log = read.tx streams key
+    events |&gt; foreach (event -&gt; log |&gt; append event)</code></pre>
+<p>That looks pretty good, but unfortunately <code>publishKey</code> has a bug. We
+fetch the relevant log with <code>read.tx streams key</code>, which will fail if
+the log isn’t there, <em>but nothing guarantees the log will be there</em>.
+The logs are per key, so we cannot create them all in advance as we
+don’t know all the keys in advance. Instead, we will create each log
+on demand if we cannot find it in storage when we want to write some
+events to it. We will use <code>randomName: '{Random} Text</code> to generate a
+name for our log:</p>
+<pre class="haskell"><code>publishKey: Database -&gt; Key -&gt; [Event] -&gt;{Storage, Exception} ()
+publishKey db key events =
+  transact db do
+    log = match tryRead.tx streams key with
+      Some log -&gt; log
+      None -&gt;
+        log = Log.named randomName()
+        write.tx streams key log
+        log
+    events |&gt; foreach (event -&gt; log |&gt; append event)</code></pre>
+<h3 id="wrestling-with-optimisation">Wrestling with optimisation</h3>
+<p>We’re dealing with a performance sensitive system, so we have to be
+conscious about optimising our code properly. To start with, we’re
+publishing all the events for a given key in a single transaction.
+Transactions actually have a size limit, so this isn’t wise.
+On the other hand, we don’t want to publish each event in its own transaction
+and give up batching entirely, so we’ll compromise by sending events in
+batches of 25, using <code>chunk: Nat -&gt; [a] -&gt; [[a]]</code> for help:</p>
+<pre class="haskell"><code>publishKey: Database -&gt; Key -&gt; [Event] -&gt;{Storage, Exception} ()
+publishKey db key events =
+  events
+    |&gt; chunk 25
+    |&gt; foreach (chunk -&gt;
+         transact db do
+           log = match tryRead.tx streams key with
+             Some log -&gt; log
+             None -&gt;
+               log = Log.named randomName()
+               write.tx streams key log
+               log
+           chunk |&gt; foreach (event -&gt; log |&gt; append event)
+       )</code></pre>
+<p>Ok, but now note how <code>log</code> is read from storage multiple times
+(one per chunk), even though we know that after the first chunk it
+will certainly have been created (by us) if it didn’t exist.</p>
+<p>Well, we can move the code that checks or creates the log to a separate
+transaction at the start:</p>
+<pre class="haskell"><code>publishKey: Database -&gt; Key -&gt; [Event] -&gt;{Storage, Exception} ()
+publishKey db key events =
+  log = transact db do
+    match tryRead.tx streams key with
+      Some log -&gt; log
+      None -&gt;
+        log = Log.named randomName()
+        write.tx streams key log
+        log
+  events
+    |&gt; chunk 25
+    |&gt; foreach (chunk -&gt;
+         transact db do
+           chunk |&gt; foreach (event -&gt; log |&gt; append event)
+       )</code></pre>
+<p>Remember that the above is still correct: even if we get the <code>log</code> and
+something else modifies it straight after, each call to <code>Log.append</code>
+is checking the size of the log transactionally before appending.</p>
+<p>This version of the code does avoid reading the log on each chunk,
+but it’s still not optimal: if the log doesn’t exist and we do need to
+create it, we will have this extra transaction just to create the log,
+instead of creating it in the same transaction that also adds the
+first chunk. In other words, we’re “wasting” one transactional
+roundtrip that could carry some messages instead.</p>
+<p>The optimal behaviour requires trickier code, we want to get (and
+potentially create) the log on the first chunk, and then carry it
+across the other chunks afterwards, using a fold:</p>
+<pre class="haskell"><code>publishKey: Database -&gt; Key -&gt; [Event] -&gt;{Storage, Exception} ()
+publishKey db key events =
+  events
+    |&gt; chunk 25
+    |&gt; foldLeft_ None (log chunk -&gt;
+         transact db do
+           log' = match log with
+             Some log -&gt; log
+             None -&gt; match tryRead.tx streams key with
+               Some log -&gt; log
+               None -&gt;
+                 log = Log.named randomName()
+                 write.tx streams key log
+                 log
+           chunk |&gt; foreach (event -&gt; log' |&gt; append event)
+           Some log'
+       )
+    |&gt; ignore</code></pre>
+<p>Ok, this behaves as we want it to… but it’s starting to get pretty
+gnarly. It’s not <em>terrible</em> in this short snippet, but the real code
+dealt with additional concerns such as error handling, and this log
+creation logic was really tipping the scale and making it hard to
+understand.</p>
+<p>Now, it’s reasonable at this point to want to introduce some more
+named helpers to clean it up, but that’s not as great an idea as it
+sounds in this type of system: named helpers might preserve (or even
+clarify) the <em>intent</em> of the code, but they obscure the access
+patterns to the data, which is important information for systems code
+to convey. A couple of named helpers (<code>mapChunked</code>, <code>getLog</code>) can make
+the very first version we had look quite harmless, for example:</p>
+<pre class="haskell"><code>publishKey: Database -&gt; Key -&gt; [Event] -&gt;{Storage, Exception} ()
+publishKey db key events =
+  events |&gt; mapChunked (chunk -&gt;
+    transact db do
+      log = getLog key
+      events |&gt; foreach (event -&gt; log |&gt; append event)
+  )</code></pre>
+<p>On top of that, there’s another instinct that’s even more pernicious:
+a subtle bias to make the behaviour of the system worse in order to
+have prettier code. Not every optimisation is worth its complexity, of
+course, however pretty code is first and foremost a tool to achieve
+the desired behaviour, not the other way around. This risk is
+particularly prominent in a functional programming language, which is
+typically geared towards elegant code.</p>
+<p>So, is this the best we can do? Turns out it’s not, but to see how we
+need to go looking for ideas in some unexpected places…</p>
+<h2 id="oop-and-data-oriented-design">OOP and Data Oriented Design</h2>
+<p>Unison is decidedly not an object oriented language: it has no
+classes, no methods, no inheritance, not even interfaces. And yet, the
+design we’ve seen embodies some of the ideas that have made OO
+popular: it’s based on data types that mirror their logical domain,
+keep their internals encapsulated, and expose their behaviour through
+an explicit api.</p>
+<p>In fact, here’s how our data model could be written in a
+generic-looking OO language:</p>
+<pre class="scala"><code>class Counter(state: Int) {
+  def getAndIncrement(): Int {
+    result = state
+    state = state + 1
+    return result
+  }
+}
+
+class Log[A](counter: Counter, elems: Array[A]) {
+  def at(n: Int): Int {
+     return elems[n]
+  }
+   
+  def append(a: A) {
+    n = counter.getAndIncrement()
+    elems[n] = a
+  }
+}
+
+class Key(..)
+class Event(..)
+
+class Streams(streams: Map[Key, Log[Event]])</code></pre>
+<p>There is a lot to like about this model: the behaviour of each
+component is easily understood just via its public api, and richer
+behaviour is achieved by combining these small components together.</p>
+<p>Furthermore, the common FP criticism about the dangers of mutation
+wouldn’t translate to our original code: transactions guarantee
+serializability, which is very easy to reason about.</p>
+<p>There is however another angle for critiquing this model, using the
+perspective of Data Oriented Design. The ideas behind Data Oriented
+Design come largely from videogame development, in a context where
+optimising memory access matters a lot, and you’re managing memory
+manually.</p>
+<p>So let’s apply this lens to the code snippet above. We’re going to
+assume a runtime representation similar to Java, Scala or Ruby, except
+without a GC.</p>
+<p>The main thing to note is how many pointers are involved at runtime
+here: <code>Streams</code> has a pointer to a <code>Map</code>, which has pointers to
+various instances of <code>Log</code>, which have pointers to instances of
+<code>Counter</code>, and so on.</p>
+<p>This is problematic for two reasons:</p>
+<ul>
+<li>From a performance point of view, accessing a piece of data involves
+several roundtrips to memory as we hop from pointer to pointer.
+Also, creating data requires a bunch of tiny individual heap
+allocations.</li>
+<li>From a simplicity point of view, manual memory management is error
+prone as each pointer has to have its memory deallocated
+individually, and in a specific order. E.g. freeing our <code>Streams</code>
+class involves iterating over the <code>Map</code> to free each <code>Log</code>, and
+freeing each <code>Log</code> involves freeing the <code>Counter</code> and iterating over
+the <code>Array</code> to free each <code>A</code>, etc.</li>
+</ul>
+<p>Data Oriented Design on the other hand would forego nested pointers in
+favour of structuring data as flat arrays indexed by integer IDs. We
+could then access it efficiently by reading whole chunks of memory,
+and allocate it and deallocate it in bulk, without worrying about the
+lifetimes of its individual pieces.</p>
+<p>But beyond specific technical strategies, Data Oriented Design
+advocates for a very different way to approach data modelling: we
+should not strive for code to reflect the logical domain we’re working
+in, but rather frame programs as data transformations, and then
+identity the simplest, most efficient way for the <em>machine</em> to perform
+the desired transformation.</p>
+<p>Now, it’s easy to dismiss all this as supremely irrelevant to us: we
+<em>do</em> have a GC, we enjoy it very much thank you, and we’re in a far
+higher level language anyway where this minutiae ought not to matter.</p>
+<p>But let’s zoom out a bit: it is true that in a higher level language
+there’s less emphasis about counting every single memory access,
+however in our transactional code the pointer hopping mapped to reads
+from storage, and we <em>did</em> care about minimising those. We also didn’t
+have to deal with manual deallocation of memory, but the chief
+complication in <code>publishKey</code> could indeed be framed as a problem with
+<em>lifetimes</em>, specifically about having to create these <code>Log</code> instances
+at the right time.</p>
+<p>So let’s try to apply Data Oriented Design to our problem and see if
+it bears any fruit.</p>
+<h3 id="data-oriented-design-in-action">Data Oriented Design in action</h3>
+<p>Let’s look back at the most optimised version of our code:</p>
+<pre class="haskell"><code>publishKey: Database -&gt; Key -&gt; [Event] -&gt;{Storage, Exception} ()
+publishKey db key events =
+  events
+    |&gt; chunk 25
+    |&gt; foldLeft_ None (log chunk -&gt;
+         transact db do
+           log' = match log with
+             Some log -&gt; log
+             None -&gt; match tryRead.tx streams key with
+               Some log -&gt; log
+               None -&gt;
+                 log = Log.named randomName()
+                 write.tx streams key log
+                 log
+           chunk |&gt; foreach (event -&gt; log' |&gt; append event)
+           Some log'
+       )
+    |&gt; ignore</code></pre>
+<p>Remember that the complexity in this code is to ensure that each call
+to <code>publishKey</code> fetches the log once, if it exists, and creates it in
+the same roundtrip that carries the first chunk of events, if it
+doesn’t.</p>
+<p>Also note that <code>append</code> involves another read from storage to fetch
+the latest size of the log: that call <em>has</em> to happen once per chunk,
+so that we don’t overwrite any events if a concurrent call to
+<code>publishKey</code> has published some events in between two of our chunks.
+It might seem like this storage read happens once <em>per message</em> rather
+than once per chunk, but subsequent calls to <code>append</code> in a single
+transaction will read the log size from memory since previous appends
+have buffered a write to it (this ensures that transactions see a
+consistent snapshot).</p>
+<p>Ok, now let’s apply Data Oriented Design instead, we will forget about
+our existing abstractions in favour of looking at the essential data
+transformations that define our problem.</p>
+<p>What data do we need to read a message in a keyed stream? Such a message
+would be identified by its key, and by its index in the stream, so we
+have a mapping:</p>
+<pre><code>(Key, Nat) ---&gt; Event</code></pre>
+<p>That’s not enough information to write new events though, we also have
+to keep track of the size of each stream, to know which index to write
+at next. There is one stream per key, so we need a mapping:</p>
+<pre><code>Key ---&gt; Nat</code></pre>
+<p>We can easily represent these mappings as <code>Table</code>s:</p>
+<pre class="haskell"><code>streams: Table (Key, Nat) Event
+streamSizes: Table Key Nat</code></pre>
+<p>writing a chunk of events is now straightforward: in a single
+transaction we read the size of the stream for a given key, compute
+the range of indexes the new events will have, and write the new size
+to the <code>streamSizes</code> table, and the events to the <code>streams</code> table. We
+do that for every chunk in our input batch.</p>
+<p>Here’s the new and improved code:</p>
+<pre class="haskell"><code>streams: Table (Key, Nat) Event
+streams = Table &quot;streams&quot;
+
+streamSizes: Table Key Nat
+streamSizes = Table &quot;stream-sizes&quot;
+
+publishKey: Database -&gt; Key -&gt; [Event] -&gt;{Storage, Exception} ()
+publishKey db key events =
+  events
+    |&gt; chunk 25
+    |&gt; foreach (chunk -&gt;
+         transact db do
+           start = tryRead.tx streamSizes key |&gt; Optional.getOrElse 0
+           write.tx streamSizes key (start + size chunk)
+           chunk
+             |&gt; indexed
+             |&gt; foreach cases (event, n) -&gt; write.tx streams (key, start + n) event
+       )</code></pre>
+<p>That’s a lot less convoluted!</p>
+<p>But not just that, it’s also <em>more</em> performant than the most optimised
+version we had previously: both versions read the log size on each
+chunk, but the previous version would also have to read and
+potentially write the <code>Log</code> object itself on the first chunk of each
+call, that’s just
+gone here. And note how much easier it is to reason about the access
+patterns to storage in the first place, previously we’d have to look
+at <code>publishKey</code>, <code>Log.append</code> and <code>Counter.getAndIncrement</code>, whereas
+now we just have to look at <code>publishKey</code>.</p>
+<p>But hold on, you might say, how can the log management just disappear,
+have we lost anything in the transition to this new design? Well, in
+retrospect we can see how the previous design was more powerful than we
+actually need, this representation:</p>
+<pre><code>streams: Table Key (Log Event)</code></pre>
+<p>can also represent dynamic logs, for example a log that expires every
+15 minutes and gets replaced by a new one.</p>
+<p>We don’t need this power here, but are forced to pay for it
+regardless, both in the complexity of dealing with log creation, and
+with the performance hit of having each call to <code>publishKey</code> read the
+<code>Log</code> object, even though its identity will never change, only its
+contents will.</p>
+<p>Focusing on essential data transformations helped us hone in on
+exactly what we need, and delivered code that is <em>both</em> simpler and
+faster in this scenario.</p>
+<p>It’s also interesting how Data Oriented Design changed our code in
+much the same way it does when applied to an in-memory OO codebase: we
+no longer have these self-contained objects like <code>Log</code> and <code>Counter</code>,
+connected by nested pointers (dynamic table names), with pointer
+hopping (<code>streams</code> –&gt; <code>Log</code> –&gt; <code>Counter</code>). Instead, data is layed
+out in flat tables with static indexes.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>You shouldn’t walk away from this post thinking that there is a
+universal winner between the two approaches we discussed today.
+Instead, you should look critically at the tradeoffs.</p>
+<p>The OO design is more composable, it gives us nice building blocks
+that we can package in a library and reuse in interesting ways to
+easily assemble novel behaviour. Conversely, if we’re willing to give
+up flexibility, Data Oriented Design can result in simpler code,
+and with an easier path to optimal performance.</p>
+<p>There is something deeper here, regarding the nature of abstraction
+itself: abstraction generalises solutions to similar problems by
+<em>forgetting about their differences</em>.</p>
+<p>For example, we can generalise several scenarios where data needs to
+be linearised into the concept of a <code>Log</code>, which leaves space in our
+brain to think about other parts of the problem and therefore raises
+the ceiling of what we’re able to accomplish. However, the most
+<em>optimal</em> solution for a given subproblem relies almost by definition
+on the aspects that make it unique in a class of similar problems, and
+those are more easily discovered by tearing abstraction down. In our
+case, foregoing the <code>Log</code> abstraction showed how we don’t have to
+worry about log lifetimes at all.</p>
+<p>I would argue that a greater appreciation of these tradeoffs is as big
+a payoff from our journey than the code improvement that we got.</p>
+<p>In fact, beyond any specific technique, it is the compounding of this
+type of understanding that, in my experience, actually makes you a
+better programmer.</p>
+<h3 id="appendix-3-practical-points-for-exploiting-far-out-ideas">Appendix: 3 practical points for exploiting far out ideas</h3>
+<ul>
+<li><p>A lot of interesting ideas are found in somewhat niche communities:
+functional programming, game development, formal methods, futuristic HCI, etc.
+Be curious.</p></li>
+<li><p>At a first glance, many bad ideas make perfect sense, and many good
+ideas sound like utter nonsense. Don’t take anything at face value,
+but don’t close your mind too early either.</p></li>
+<li><p>Unfortunately, cool ideas are often presented as universal truths
+that ought to apply to every field of software engineering. Instead,
+they are typically borne out of a specific context. Strive to really
+understand it, and you will find ways to apply those ideas in
+interesting, unexpected places that share just a tiny bit of that
+context. Equally as importantly, you will know when you can safely
+dismiss them as well.</p></li>
+</ul>
+                <hr>
+            </div>
+        </div>
+    </div>
+</article>
+
+    </div>
+    <div id="footer">
+    </div>
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <!-- <li> -->
+                    <!--     <a href="feed.xml" data-datatype="json" data-type="GET" data-target="#frame" class="reload" id="clickme"> -->
+                    <!--         <span class="fa-stack fa-lg"> -->
+                    <!--             <i class="fa fa-circle fa-stack-2x"></i> -->
+                    <!--             <i class="fa fa-rss fa-stack-1x fa-inverse"></i> -->
+                    <!--         </span> -->
+                    <!--     </a> -->
+                    <!-- </li> -->
+                    
+                    <li>
+                        <a href="https://github.com/SystemFw" target="_blank">
+                            <span class="fa-stack fa-lg">
+
+                                <i class="fa fa-arrow-circle-o-down"></i>
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a href="https://linkedin.com/in/fabiolabella" target="_blank">
+                            <span class="fa-stack fa-lg">
+
+                                <i class="fa fa-arrow-circle-o-down"></i>
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Fabio Labella 2019. <br><br>
+                </p>
+                <div class="col-md-12">
+                  <p class="copyright text-muted">
+                    Site generated by
+                    <a href="http://jaspervdj.be/hakyll" target="_blank">Hakyll</a>.
+                    Theme designed by
+                    <a href="https://github.com/katychuang" target="_blank">Katy Chuang</a>
+                    and can be found
+                    <a href="http://katychuang.com/hakyll-cssgarden/gallery/" target="_blank">here.</a>
+                  </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="../static/js/jquery.min.js"></script>
+<script src="../static/js/spaceg.stylesheets.min.js"></script>
+<script src="../static/js/bootstrap.min.js"></script>
+<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+<script src="../static/js/scripts.js"></script>
+
+</body>
+
+</html>
