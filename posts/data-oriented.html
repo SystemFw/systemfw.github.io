@@ -398,8 +398,8 @@ post).</p>
 but we won’t cover it here for space reasons, just know that we can
 call <code>toRemote</code> to embed other cloud abilities in it, like <code>Storage</code>,
 <code>Exception</code> or <code>Random</code>.</p>
-<p>Ok, let’s plan the implementation out. We need to start by grouping
-the batch of events by key, which we can do with:</p>
+<p>Ok, let’s plan the implementation out. We need to group the batch of
+events by key, which we can do with:</p>
 <pre class="haskell"><code>List.groupMap : (a -&gt; k) -&gt; (a -&gt; v) -&gt; [a] -&gt; Map k (List.Nonempty v)</code></pre>
 <p>We then want to upload batches of events for different keys in parallel,
 let’s use <code>Remote.parMap</code>:</p>
